@@ -6,9 +6,7 @@ Mostly a fun side project to understand the level files better and mess with bro
 ## Todo
 
 * UVs
-* Textures (no dds support in browser? convert?)
-* Fix indices wrong in some levels
-* Lot more
+* Refactor code
 
 ## Screenshots
 

@@ -82,4 +82,9 @@ export class BufferReader {
 	tell(): number {
 		return this.position
 	}
+
+	slice(start?: number, end?: number): Buffer
+	{
+		return this.buffer.slice(start, end)
+	}
 }

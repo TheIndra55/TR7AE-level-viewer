@@ -1,5 +1,7 @@
 import { Buffer } from "buffer"
+import { CompressedTexture } from "three"
 import { BufferReader } from "./BufferReader"
+import { TextureSection } from "./Texture"
 
 export class Section
 {
@@ -11,6 +13,7 @@ export class Section
 
 	numRelocations: number
 	relocations: Relocation[]
+	id: number
 
 	constructor()
 	{
@@ -26,7 +29,8 @@ export class Section
 		buffer.skip(3)
 		const packedData = buffer.readInt32LE()
 		section.numRelocations = packedData >> 8
-		buffer.skip(8)
+		section.id = buffer.readUInt32LE()
+		buffer.skip(4)
 
 		return section
 	}
@@ -67,6 +71,14 @@ class Relocation
 	offset: number;
 }
 
+export enum SectionType
+{
+	General = 0,
+	Empty = 1,
+	Animation = 2,
+	Texture = 5,
+}
+
 export class SectionList
 {
 	sections: Section[]
@@ -103,10 +115,32 @@ export class SectionList
 		console.log(`numSections = ${numSections}`)
 	}
 
+	LoadTextures()
+	{
+		for(let section of this.sections)
+		{
+			if(section.type == SectionType.Texture)
+			{
+				const texture = new TextureSection(this, section)
+
+				if(texture.numMipMaps > 0)
+				{
+					texture.LoadTexture()
+					TextureStore.textures.push(texture)
+				}
+			}
+		}
+	}
+
 	GetSection(index: number)
 	{
 		return this.sections[index]
 	}
+}
+
+export class TextureStore
+{
+	static textures: TextureSection[] = []
 }
 
 export class Pointer

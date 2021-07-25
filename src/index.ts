@@ -1,8 +1,8 @@
 import { Level, TerrainRenderVertexList, TerrainGroup } from "./Level"
-import { SectionList } from "./Section"
+import { SectionList, TextureStore } from "./Section"
 import { OctreeSphere } from "./Octree"
 
-import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, DoubleSide, Color } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color, BackSide } from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 const scene = new Scene();
@@ -16,6 +16,11 @@ camera.position.z = 200;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
+const uvs = []
+const faces = []
+const materials = []
+const groups = []
+
 function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 {
 	const arr = []
@@ -25,12 +30,13 @@ function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 		arr.push(vertex.x / 10)
 		arr.push(vertex.z / 10)
 		arr.push(vertex.y / 10)
+
+		uvs.push(vertex.u)
+		uvs.push(vertex.v)
 	}
 
 	return Int16Array.from(arr)
 }
-
-const faces = []
 
 function processTerrain(terraingroups: TerrainGroup[])
 {
@@ -39,43 +45,48 @@ function processTerrain(terraingroups: TerrainGroup[])
 	//{
 	if(terraingroups[0].octreeSphere != null)
 	{
-		processOctrees(terraingroups[0].GetOctreeSphere())
+		createMaterials(terraingroups[0])
+		processOctrees(terraingroups[0], terraingroups[0].GetOctreeSphere())
 	}
 	//}
 }
 
-let baseVertexIndex = 0
+function createMaterials(terraingroup: TerrainGroup)
+{
+	for(let material of terraingroup.xboxPcMaterialList.materials)
+	{
+		const texture = TextureStore.textures.find(x => x.section.id == material.texture)
+
+		material.material = new MeshBasicMaterial({side: BackSide, map: texture?.texture})
+		materials.push(material)
+	}
+}
 
 // process all octrees and face strips
-function processOctrees(octree: OctreeSphere)
+function processOctrees(terraingroup: TerrainGroup, octree: OctreeSphere)
 {
 	for(let sphere of octree.spheres)
 	{
-		processOctrees(sphere)
+		processOctrees(terraingroup, sphere)
 	}
 
 	if(octree.strip)
 	{
 		for(let strip of octree.GetTerrainTextureStrips())
 		{
+			if(strip.vmoObjectIndex != -1)
+			{
+				continue
+			}
+
+			const baseVertexIndex = terraingroup.GetMaterial(strip.matIdx).vbBaseOffset
+
+			groups.push({ start: faces.length, count: strip.stripVertex.length, materialIndex: strip.matIdx })
+
 			for(let i = 0; i < strip.stripVertex.length; i++)
 			{
-				if(strip.vmoObjectIndex != -1)
-				{
-					continue
-				}
 
-				const indice = strip.stripVertex[i]
-
-				// FIXME this still breaks for some levels
-				// if vertex resets to 0 again add offset of highest vertex
-				if(indice == 0 && faces.length > 0 && i == 0)
-				{
-					// get higest vertex plus 1
-					baseVertexIndex = [...faces].sort((a, b) => a - b).reverse()[0] + 1
-				}
-
-				faces.push(baseVertexIndex + indice)
+				faces.push(baseVertexIndex + strip.stripVertex[i])
 			}
 		}
 	}
@@ -91,6 +102,7 @@ fetch(level)
 	const drm = new SectionList(x)
 	
 	const level = new Level(drm)
+	drm.LoadTextures()
 
 	const terrain = level.GetTerrain()
 	const vertexes = terrain.GetTerrainVertexList()
@@ -100,17 +112,15 @@ fetch(level)
 
 	const geometry = new BufferGeometry();
 	geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes), 3))
-	//geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
+	geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
 
 	const terrainGroups = terrain.GetTerrainGroups()
 	processTerrain(terrainGroups)
 
 	geometry.setIndex(faces)
+	geometry.groups = groups
 
-	const material = new MeshBasicMaterial( { side: DoubleSide, color: 0xFF0000 } );
-	material.wireframe = true
-
-	const levelmesh = new Mesh(geometry, material)
+	const levelmesh = new Mesh(geometry, materials.map(x => x.material))
 	scene.add(levelmesh)
 })
 

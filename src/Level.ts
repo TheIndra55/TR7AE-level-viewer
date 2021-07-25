@@ -1,7 +1,7 @@
 import { SectionList, Section, Pointer } from "./Section"
 import { BufferReader } from "./BufferReader"
 import { OctreeSphere } from "./Octree"
-import { Color } from "three"
+import { XboxPcMaterialList, XboxPcMaterialStripList } from "./Material"
 
 export class Level
 {
@@ -139,6 +139,8 @@ export class TerrainGroup
 	collisionMesh: Pointer
 	octreeSphere: Pointer
 
+	xboxPcMaterialList: XboxPcMaterialList
+
 	constructor(sections: SectionList, section: Section)
 	{
 		this.buffer = sections.buffer
@@ -151,13 +153,26 @@ export class TerrainGroup
 		this.buffer.skip(8)
 		this.octreeSphere = Pointer.Here(sections, section)
 
+		this.buffer.skip(72)
+		const materialList = Pointer.Here(sections, section)
+
+		if(materialList)
+		{
+			this.xboxPcMaterialList = new XboxPcMaterialList(sections, materialList)
+		}
+
 		// skip to end
-		this.buffer.skip(96)
+		this.buffer.skip(32)
 	}
 
 	GetOctreeSphere(): OctreeSphere
 	{
 		return new OctreeSphere(this.sections, this.octreeSphere)
+	}
+
+	GetMaterial(matId: number): XboxPcMaterialStripList
+	{
+		return this.xboxPcMaterialList.materials[matId]
 	}
 
 	static ReadTerrainGroups(sections: SectionList, pointer: Pointer, numTerrainGroups: number): TerrainGroup[]

@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
 		"outDir": "./dist/",
-		"sourceMap": true
+		"sourceMap": true,
+		"target": "ES6",
+		"moduleResolution": "node"
 	}
 }

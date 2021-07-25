@@ -86,8 +86,7 @@ export class TerrainTextureStripInfo
 	stripVertex: number[]
 
 	vmoObjectIndex: number
-
-	whereAmI: number
+	matIdx: number
 
 	constructor(sections: SectionList, pointer: Pointer)
 	{
@@ -98,12 +97,13 @@ export class TerrainTextureStripInfo
 
 		this.buffer.seek(pointer.section.offset + pointer.offset)
 
-		this.whereAmI = this.buffer.tell() - pointer.section.offset;
-
 		const vertexCount = this.buffer.readInt32LE()
 		this.vmoObjectIndex = this.buffer.readInt32LE()
+
+		this.buffer.skip(12)
+		this.matIdx = this.buffer.readInt32LE()
 		
-		this.buffer.skip(32)
+		this.buffer.skip(16)
 		this.nextTexture = Pointer.Here(sections, this.section)
 
 		for(let i = 0; i < vertexCount; i++)
