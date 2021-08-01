@@ -39,7 +39,7 @@ export class TextureSection
 
     GetTextureData()
     {
-		const data = this.buffer.slice(this.section.offset + 48, this.section.offset + this.section.size - 48)
+		const data = this.buffer.slice(this.section.offset + 24, this.section.offset + this.section.size - 24)
 		return new Uint8Array(data, 0, data.length)
     }
 

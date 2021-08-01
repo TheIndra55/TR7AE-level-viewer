@@ -5,10 +5,17 @@ Mostly a fun side project to understand the level files better and mess with bro
 
 ## Todo
 
-* UVs
+* Fix UVs being bit off
+* Multiple terraingroups
 * Refactor code
+
+## Thanks to
+
+* AesirHod
+* Raq
 
 ## Screenshots
 
-![](https://user-images.githubusercontent.com/15322107/125868639-5001c2b5-e176-4d1a-baf3-5fffc2a2039a.png)
-![](https://user-images.githubusercontent.com/15322107/125868643-f4d31ace-29d7-4d03-825c-f97438f6a07b.png)
+![mansion1](https://user-images.githubusercontent.com/15322107/127756965-5ac454ab-9b7b-4224-a178-2f5a3906e4fc.png)
+![mansion7](https://user-images.githubusercontent.com/15322107/127756963-9dc59a7e-e774-4de3-975e-994662fb3345.png)
+![container1](https://user-images.githubusercontent.com/15322107/127756964-369fb9f2-a995-4622-83a8-fa2cba6680ac.png)

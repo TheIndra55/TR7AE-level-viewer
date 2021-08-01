@@ -1,5 +1,20 @@
 import { Buffer } from "buffer"
-import * as ieee754 from "ieee754"
+import { DataUtils } from "three/src/extras/DataUtils"
+
+// https://stackoverflow.com/a/5684578/9398242
+function float16_to_float(h) {
+    const s = (h & 0x8000) >> 15;
+    const e = (h & 0x7C00) >> 10;
+    const f = h & 0x03FF;
+
+    if(e == 0) {
+        return (s?-1:1) * Math.pow(2,-14) * (f/Math.pow(2, 10));
+    } else if (e == 0x1F) {
+        return f?NaN:((s?-1:1)*Infinity);
+    }
+
+    return (s?-1:1) * Math.pow(2, e-15) * (1+(f/Math.pow(2, 10)));
+}
 
 export class BufferReader {
 	buffer: Buffer;
@@ -61,14 +76,8 @@ export class BufferReader {
 
 	readShortFloatLE(): number
 	{
-		//const ret = ieee754.read(this.buffer, this.position, true, 10, 2)
-		const temp = new ArrayBuffer(4);
-		const view = new DataView(temp);
-		view.setInt32(0, this.buffer.readUInt16LE(this.position) << 16);
-
-		this.position += 2
-
-		return view.getFloat32(0)
+		const half = this.readUInt16LE()
+		return float16_to_float(half) * 2048
 	}
 
 	seek(position: number) {
