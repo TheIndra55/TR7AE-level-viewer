@@ -5,6 +5,8 @@ import { OctreeSphere } from "./Octree"
 import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color, BackSide } from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
+import * as Stats from "stats.js"
+
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
@@ -124,9 +126,15 @@ fetch(level)
 	scene.add(levelmesh)
 })
 
-function animate() {
-	requestAnimationFrame(animate);
+const stats = new Stats();
+stats.showPanel(0); // fps
 
+document.body.appendChild(stats.dom);
+
+function animate() {
+	stats.begin()
 	renderer.render(scene, camera);
+	stats.end()
 }
-animate();
+
+renderer.setAnimationLoop(animate)
