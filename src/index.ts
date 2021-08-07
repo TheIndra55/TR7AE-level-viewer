@@ -6,6 +6,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMater
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 import * as Stats from "stats.js"
+import { GUI } from "dat.gui"
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -18,6 +19,7 @@ camera.position.z = 200;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
+// TODO refactor, less global state
 const uvs = []
 const faces = []
 const materials = []
@@ -95,8 +97,9 @@ function processOctrees(terraingroup: TerrainGroup, octree: OctreeSphere)
 }
 
 const urlParams = new URLSearchParams(window.location.search);
-const level = urlParams.get("level");
+const level = urlParams.get("level") ?? "container1.drm";
 
+// fetch level
 fetch(level)
 .then(x => x.arrayBuffer())
 .then(x => {
@@ -112,6 +115,7 @@ fetch(level)
 	// set the background to the level background color
 	scene.background = new Color(level.backColorR / 255, level.backColorG / 255, level.backColorB / 255)
 
+	// pass all level geometry to buffergeometry
 	const geometry = new BufferGeometry();
 	geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes), 3))
 	geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
@@ -124,6 +128,28 @@ fetch(level)
 
 	const levelmesh = new Mesh(geometry, materials.map(x => x.material))
 	scene.add(levelmesh)
+})
+
+// fetch levels to display in dat.gui
+fetch("levels.json")
+.then(x => x.json())
+.then(levels => {
+	// check
+	if(!levels || levels.length == 0)
+	{
+		return
+	}
+
+	// setup datgui
+	const gui = new GUI()
+
+	const buttons = {}
+	for(let level of levels)
+	{
+		// TODO this is ugly, fetch new drm instead of reloading page
+		buttons[level.name] = ( ) => { location.href = `?level=${level.drm}` } 
+		gui.add(buttons, level.name)
+	}
 })
 
 const stats = new Stats();
