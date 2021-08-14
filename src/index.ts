@@ -31,7 +31,7 @@ function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 	for(let vertex of vertexes.vertexList)
 	{
 		// divide by 10 so it doesnt become massive
-		arr.push(vertex.x / 10)
+		arr.push(-vertex.x / 10)
 		arr.push(vertex.z / 10)
 		arr.push(vertex.y / 10)
 
@@ -61,7 +61,7 @@ function createMaterials(terraingroup: TerrainGroup)
 	{
 		const texture = TextureStore.textures.find(x => x.section.id == material.texture)
 
-		material.material = new MeshBasicMaterial({side: BackSide, map: texture?.texture})
+		material.material = new MeshBasicMaterial({map: texture?.texture})
 		materials.push(material)
 	}
 }
