@@ -5,8 +5,8 @@ Mostly a fun side project to understand the level files better and mess with bro
 
 ## Todo
 
-* Fix UVs being bit off
 * Multiple terraingroups
+* Fix Z-fighting
 * Refactor code
 
 ## Thanks to

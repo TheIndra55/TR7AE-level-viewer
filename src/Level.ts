@@ -110,8 +110,8 @@ export class TerrainRenderVertexList
 
 		vertex.color = this.buffer.readInt32LE()
 
-		vertex.u = this.buffer.readShortFloatLE()
-		vertex.v = this.buffer.readShortFloatLE()
+		vertex.u = this.buffer.readUInt16LE() * 0.00024414062
+		vertex.v = this.buffer.readUInt16LE() * 0.00024414062
 
 		this.buffer.skip(4)
 
