@@ -99,10 +99,14 @@ function processOctrees(terraingroup: TerrainGroup, octree: OctreeSphere)
 const urlParams = new URLSearchParams(window.location.search);
 const level = urlParams.get("level") ?? "container1.drm";
 
+setOverlay("Downloading...")
+
 // fetch level
 fetch(level)
 .then(x => x.arrayBuffer())
 .then(x => {
+	setOverlay("Loading...")
+
 	// load the downloaded file as DRM/SectionList
 	const drm = new SectionList(x)
 	
@@ -128,6 +132,8 @@ fetch(level)
 
 	const levelmesh = new Mesh(geometry, materials.map(x => x.material))
 	scene.add(levelmesh)
+
+	clearOverlay();
 })
 
 // fetch levels to display in dat.gui
@@ -161,6 +167,17 @@ function animate() {
 	stats.begin()
 	renderer.render(scene, camera);
 	stats.end()
+}
+
+function setOverlay(text)
+{
+	(document.querySelector(".overlay") as HTMLElement).style.display = "block";
+	(document.querySelector(".overlay .text") as HTMLElement).innerText = text;
+}
+
+function clearOverlay()
+{
+	(document.querySelector(".overlay") as HTMLElement).style.display = "none";
 }
 
 renderer.setAnimationLoop(animate)
