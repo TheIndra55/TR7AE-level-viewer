@@ -3,6 +3,7 @@
 		"outDir": "./dist/",
 		"sourceMap": true,
 		"target": "ES6",
+		"esModuleInterop": true,
 		"moduleResolution": "node"
 	}
 }

@@ -5,7 +5,7 @@ import { OctreeSphere } from "./Octree"
 import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color, BackSide } from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
-import * as Stats from "stats.js"
+import Stats from "stats.js"
 import { GUI } from "dat.gui"
 
 const scene = new Scene();
@@ -158,7 +158,7 @@ fetch("levels.json")
 	}
 })
 
-const stats = new Stats();
+const stats = new Stats()
 stats.showPanel(0); // fps
 
 document.body.appendChild(stats.dom);
