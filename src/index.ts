@@ -2,7 +2,7 @@ import { Level, TerrainRenderVertexList, TerrainGroup } from "./Level"
 import { SectionList, TextureStore } from "./Section"
 import { OctreeSphere } from "./Octree"
 
-import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color, BackSide } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color } from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 import Stats from "stats.js"

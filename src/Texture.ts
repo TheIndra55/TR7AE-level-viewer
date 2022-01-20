@@ -1,6 +1,6 @@
 import { BufferReader } from "./BufferReader";
 import { Section, SectionList } from "./Section";
-import { RGB_S3TC_DXT1_Format, RGBA_S3TC_DXT5_Format, CompressedTexture, CompressedPixelFormat, LinearFilter } from "three"
+import { RGB_S3TC_DXT1_Format, RGBA_S3TC_DXT5_Format, CompressedTexture, CompressedPixelFormat, LinearFilter, RepeatWrapping } from "three"
 
 export class TextureSection
 {
@@ -46,6 +46,9 @@ export class TextureSection
     LoadTexture()
     {
 		this.texture = new PcdTextureLoader().parse(this)
+
+		this.texture.wrapS = RepeatWrapping
+		this.texture.wrapT = RepeatWrapping
     }
 }
 
