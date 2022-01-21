@@ -21,6 +21,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 
 // TODO refactor, less global state
 const uvs = []
+const colors = []
 let faces = []
 const materials = []
 let groups = []
@@ -37,6 +38,10 @@ function vertexToVertices(vertexes: TerrainRenderVertexList, offset: Vector): In
 
 		uvs.push(vertex.u)
 		uvs.push(vertex.v)
+
+		colors.push((vertex.color & 0xff) / 255)
+		colors.push(((vertex.color >> 8) & 0xff) / 255)
+		colors.push(((vertex.color >> 16) & 0xff) / 255)
 	}
 
 	return Int16Array.from(arr)
@@ -58,7 +63,7 @@ function createMaterials(terraingroup: TerrainGroup)
 	{
 		const texture = TextureStore.textures.find(x => x.section.id == material.texture)
 
-		material.material = new MeshBasicMaterial({map: texture?.texture})
+		material.material = new MeshBasicMaterial({map: texture?.texture, vertexColors: true})
 		materials[material.texture] = material
 	}
 }
@@ -128,11 +133,13 @@ fetch(level)
 		const geometry = new BufferGeometry();
 		geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes, terraingroup.globalOffset), 3))
 		geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
+		geometry.setAttribute("color", new BufferAttribute(Float32Array.from(colors), 3));
 
 		geometry.setIndex([...faces])
 		geometry.groups = [...groups]
 
 		const levelmesh = new Mesh(geometry, materials.map(x => x.material))
+
 		scene.add(levelmesh)
 	}
 
