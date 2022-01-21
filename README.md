@@ -23,6 +23,6 @@ npm run build
 
 ## Screenshots
 
-![mansion1](https://user-images.githubusercontent.com/15322107/127756965-5ac454ab-9b7b-4224-a178-2f5a3906e4fc.png)
-![mansion7](https://user-images.githubusercontent.com/15322107/127756963-9dc59a7e-e774-4de3-975e-994662fb3345.png)
+![flashback1](https://user-images.githubusercontent.com/15322107/150593262-df54fa30-f3bb-4810-869e-3cbce7945831.png)
+![st francis folly](https://user-images.githubusercontent.com/15322107/150593561-99010b01-8451-4839-8158-1341c970b12c.png)
 ![container1](https://user-images.githubusercontent.com/15322107/127756964-369fb9f2-a995-4622-83a8-fa2cba6680ac.png)
