@@ -5,7 +5,6 @@ Mostly a fun side project to understand the level files better and mess with bro
 
 ## Todo
 
-* Multiple terraingroups
 * BGObjects
 * Fix Z-fighting
 * Refactor code

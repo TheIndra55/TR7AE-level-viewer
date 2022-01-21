@@ -1,4 +1,4 @@
-import { Level, TerrainRenderVertexList, TerrainGroup } from "./Level"
+import { Level, TerrainRenderVertexList, TerrainGroup, Vector } from "./Level"
 import { SectionList, TextureStore } from "./Section"
 import { OctreeSphere } from "./Octree"
 
@@ -21,19 +21,19 @@ const controls = new OrbitControls(camera, renderer.domElement);
 
 // TODO refactor, less global state
 const uvs = []
-const faces = []
+let faces = []
 const materials = []
-const groups = []
+let groups = []
 
-function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
+function vertexToVertices(vertexes: TerrainRenderVertexList, offset: Vector): Int16Array
 {
 	const arr = []
 	for(let vertex of vertexes.vertexList)
 	{
 		// divide by 10 so it doesnt become massive
-		arr.push(-vertex.x / 10)
-		arr.push(vertex.z / 10)
-		arr.push(vertex.y / 10)
+		arr.push(-(vertex.x + offset.x) / 10)
+		arr.push((vertex.z + offset.z) / 10)
+		arr.push((vertex.y + offset.y) / 10)
 
 		uvs.push(vertex.u)
 		uvs.push(vertex.v)
@@ -42,17 +42,14 @@ function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 	return Int16Array.from(arr)
 }
 
-function processTerrain(terraingroups: TerrainGroup[])
+function processTerrainGroup(terraingroup: TerrainGroup)
 {
-	// TODO draw all terraingroups
-	//for(let terraingroup of terraingroups)
-	//{
-	if(terraingroups[0].octreeSphere != null)
+	if(terraingroup.octreeSphere != null)
 	{
-		createMaterials(terraingroups[0])
-		processOctrees(terraingroups[0], terraingroups[0].GetOctreeSphere())
+		createMaterials(terraingroup)
+
+		processOctrees(terraingroup, terraingroup.GetOctreeSphere())
 	}
-	//}
 }
 
 function createMaterials(terraingroup: TerrainGroup)
@@ -62,7 +59,7 @@ function createMaterials(terraingroup: TerrainGroup)
 		const texture = TextureStore.textures.find(x => x.section.id == material.texture)
 
 		material.material = new MeshBasicMaterial({map: texture?.texture})
-		materials.push(material)
+		materials[material.texture] = material
 	}
 }
 
@@ -83,14 +80,14 @@ function processOctrees(terraingroup: TerrainGroup, octree: OctreeSphere)
 				continue
 			}
 
-			const baseVertexIndex = terraingroup.GetMaterial(strip.matIdx).vbBaseOffset
+			const material = terraingroup.GetMaterial(strip.matIdx)
 
-			groups.push({ start: faces.length, count: strip.stripVertex.length, materialIndex: strip.matIdx })
+			groups.push({ start: faces.length, count: strip.stripVertex.length, materialIndex: material.texture })
 
 			for(let i = 0; i < strip.stripVertex.length; i++)
 			{
 
-				faces.push(baseVertexIndex + strip.stripVertex[i])
+				faces.push(material.vbBaseOffset + strip.stripVertex[i])
 			}
 		}
 	}
@@ -119,19 +116,25 @@ fetch(level)
 	// set the background to the level background color
 	scene.background = new Color(level.backColorR / 255, level.backColorG / 255, level.backColorB / 255)
 
-	// pass all level geometry to buffergeometry
-	const geometry = new BufferGeometry();
-	geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes), 3))
-	geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
+	const terraingroups = terrain.GetTerrainGroups()
 
-	const terrainGroups = terrain.GetTerrainGroups()
-	processTerrain(terrainGroups)
+	for(let terraingroup of terraingroups)
+	{
+		faces = []
+		groups = []
 
-	geometry.setIndex(faces)
-	geometry.groups = groups
+		processTerrainGroup(terraingroup)
 
-	const levelmesh = new Mesh(geometry, materials.map(x => x.material))
-	scene.add(levelmesh)
+		const geometry = new BufferGeometry();
+		geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes, terraingroup.globalOffset), 3))
+		geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
+
+		geometry.setIndex([...faces])
+		geometry.groups = [...groups]
+
+		const levelmesh = new Mesh(geometry, materials.map(x => x.material))
+		scene.add(levelmesh)
+	}
 
 	clearOverlay();
 })

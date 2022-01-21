@@ -140,6 +140,8 @@ export class TerrainGroup
 	collisionMesh: Pointer
 	octreeSphere: Pointer
 
+	globalOffset: Vector
+
 	xboxPcMaterialList: XboxPcMaterialList
 
 	constructor(sections: SectionList, section: Section)
@@ -148,8 +150,10 @@ export class TerrainGroup
 		this.sections = sections
 		this.section = section
 
+		this.globalOffset = this.buffer.readVectorLE();
+
 		// buffer position is already at terraingroup start
-		this.buffer.skip(56)
+		this.buffer.skip(44)
 		this.collisionMesh = Pointer.Here(sections, section)
 		this.buffer.skip(8)
 		this.octreeSphere = Pointer.Here(sections, section)
@@ -157,13 +161,16 @@ export class TerrainGroup
 		this.buffer.skip(72)
 		const materialList = Pointer.Here(sections, section)
 
+		// store position since code below seeks
+		const position = this.buffer.position;
+
 		if(materialList)
 		{
 			this.xboxPcMaterialList = new XboxPcMaterialList(sections, materialList)
 		}
 
 		// skip to end
-		this.buffer.skip(32)
+		this.buffer.seek(position + 28)
 	}
 
 	GetOctreeSphere(): OctreeSphere
@@ -192,4 +199,18 @@ export class TerrainGroup
 
 		return terrainGroups
 	}
+}
+
+export class Vector
+{
+	constructor(x: number, y:number, z:number)
+	{
+		this.x = x
+		this.y = y
+		this.z = z
+	}
+
+	x: number
+	y: number
+	z: number
 }
