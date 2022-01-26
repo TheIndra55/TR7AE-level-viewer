@@ -122,6 +122,9 @@ fetch(level)
 	scene.background = new Color(level.backColorR / 255, level.backColorG / 255, level.backColorB / 255)
 
 	const terraingroups = terrain.GetTerrainGroups()
+	const intros = terrain.GetIntros()
+
+	console.log(intros)
 
 	for(let terraingroup of terraingroups)
 	{
