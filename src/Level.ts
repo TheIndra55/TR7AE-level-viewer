@@ -2,6 +2,7 @@ import { SectionList, Section, Pointer } from "./Section"
 import { BufferReader } from "./BufferReader"
 import { OctreeSphere } from "./Octree"
 import { XboxPcMaterialList, XboxPcMaterialStripList } from "./Material"
+import { Intro } from "./Instance"
 
 export class Level
 {
@@ -48,6 +49,9 @@ class Terrain
 	numTerrainVertices: number
 	XboxPcVertexBuffer: Pointer
 
+	numIntros: number
+	intros: Pointer
+
 	constructor(sections: SectionList, pointer: Pointer)
 	{
 		this.sections = sections
@@ -56,7 +60,11 @@ class Terrain
 		
 		this.buffer.seek(this.section.offset + pointer.offset)
 
-		this.buffer.skip(20)
+		this.buffer.skip(4)
+		this.numIntros = this.buffer.readInt32LE()
+		this.intros = Pointer.Here(sections, this.section)
+
+		this.buffer.skip(8)
 		this.numTerrainGroups = this.buffer.readInt32LE()
 		this.terrainGroups = Pointer.Here(sections, this.section)
 
@@ -74,6 +82,11 @@ class Terrain
 	GetTerrainGroups(): TerrainGroup[]
 	{
 		return TerrainGroup.ReadTerrainGroups(this.sections, this.terrainGroups, this.numTerrainGroups)
+	}
+
+	GetIntros(): Intro[]
+	{
+		return Intro.ReadIntros(this.sections, this.intros, this.numIntros)
 	}
 }
 
@@ -141,6 +154,7 @@ export class TerrainGroup
 	octreeSphere: Pointer
 
 	globalOffset: Vector
+	flags: number
 
 	xboxPcMaterialList: XboxPcMaterialList
 
@@ -152,8 +166,12 @@ export class TerrainGroup
 
 		this.globalOffset = this.buffer.readVectorLE();
 
+		this.buffer.skip(20)
+		this.flags = this.buffer.readUInt32LE()
+
+
 		// buffer position is already at terraingroup start
-		this.buffer.skip(44)
+		this.buffer.skip(20)
 		this.collisionMesh = Pointer.Here(sections, section)
 		this.buffer.skip(8)
 		this.octreeSphere = Pointer.Here(sections, section)

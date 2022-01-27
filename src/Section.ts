@@ -123,11 +123,8 @@ export class SectionList
 			{
 				const texture = new TextureSection(this, section)
 
-				if(texture.numMipMaps > 0)
-				{
-					texture.LoadTexture()
-					TextureStore.textures.push(texture)
-				}
+				texture.LoadTexture()
+				TextureStore.textures.push(texture)
 			}
 		}
 	}

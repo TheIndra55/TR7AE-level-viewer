@@ -3,10 +3,10 @@ import { SectionList, TextureStore } from "./Section"
 import { OctreeSphere } from "./Octree"
 
 import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMaterial, Mesh, BufferAttribute, Color } from "three"
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 import Stats from "stats.js"
 import { GUI } from "dat.gui"
+import { Controller } from "./Controller"
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -15,9 +15,7 @@ const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-camera.position.z = 200;
-
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new Controller(camera, renderer.domElement)
 
 // TODO refactor, less global state
 const uvs = []
@@ -26,15 +24,17 @@ let faces = []
 const materials = []
 let groups = []
 
-function vertexToVertices(vertexes: TerrainRenderVertexList, offset: Vector): Int16Array
+let skyDome: Mesh = null;
+
+function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 {
 	const arr = []
 	for(let vertex of vertexes.vertexList)
 	{
 		// divide by 10 so it doesnt become massive
-		arr.push(-(vertex.x + offset.x) / 10)
-		arr.push((vertex.z + offset.z) / 10)
-		arr.push((vertex.y + offset.y) / 10)
+		arr.push(-(vertex.x) / 10)
+		arr.push(vertex.z / 10)
+		arr.push(vertex.y / 10)
 
 		uvs.push(vertex.u)
 		uvs.push(vertex.v)
@@ -63,7 +63,15 @@ function createMaterials(terraingroup: TerrainGroup)
 	{
 		const texture = TextureStore.textures.find(x => x.section.id == material.texture)
 
-		material.material = new MeshBasicMaterial({map: texture?.texture, vertexColors: true})
+		material.material = new MeshBasicMaterial({map: texture?.texture, vertexColors: true, alphaTest: 1})
+
+		// skydome
+		if ((terraingroup.flags & 0x200000) > 0)
+		{
+			material.material.depthTest = false
+			material.material.depthWrite = false
+		}
+
 		materials[material.texture] = material
 	}
 }
@@ -126,6 +134,10 @@ fetch(level)
 
 	console.log(intros)
 
+	const playerIntro = intros.find(x => x.id == -1)
+	camera.position.set(-(playerIntro.position.x) / 10, (playerIntro.position.z / 10) + 50, playerIntro.position.y / 10)
+
+	const vertices = vertexToVertices(vertexes)
 	for(let terraingroup of terraingroups)
 	{
 		faces = []
@@ -134,7 +146,7 @@ fetch(level)
 		processTerrainGroup(terraingroup)
 
 		const geometry = new BufferGeometry();
-		geometry.setAttribute("position", new BufferAttribute(vertexToVertices(vertexes, terraingroup.globalOffset), 3))
+		geometry.setAttribute("position", new BufferAttribute(vertices, 3))
 		geometry.setAttribute("uv", new BufferAttribute(Float32Array.from(uvs), 2))
 		geometry.setAttribute("color", new BufferAttribute(Float32Array.from(colors), 3));
 
@@ -142,6 +154,13 @@ fetch(level)
 		geometry.groups = [...groups]
 
 		const levelmesh = new Mesh(geometry, materials.map(x => x.material))
+		levelmesh.position.set(-(terraingroup.globalOffset.x) / 10, terraingroup.globalOffset.z / 10, terraingroup.globalOffset.y / 10)
+
+		if ((terraingroup.flags & 0x200000) > 0)
+		{
+			skyDome = levelmesh
+			skyDome.renderOrder = -10
+		}
 
 		scene.add(levelmesh)
 	}
@@ -178,7 +197,11 @@ document.body.appendChild(stats.dom);
 
 function animate() {
 	stats.begin()
+
+	controls.update()
+	skyDome?.position.copy(camera.position)
 	renderer.render(scene, camera);
+
 	stats.end()
 }
 

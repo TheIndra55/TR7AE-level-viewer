@@ -1,6 +1,6 @@
 import { BufferReader } from "./BufferReader";
 import { Section, SectionList } from "./Section";
-import { RGB_S3TC_DXT1_Format, RGBA_S3TC_DXT5_Format, CompressedTexture, CompressedPixelFormat, LinearFilter, RepeatWrapping } from "three"
+import { RGB_S3TC_DXT1_Format, RGBA_S3TC_DXT5_Format, CompressedTexture, LinearFilter, RepeatWrapping, RGBAFormat } from "three"
 
 export class TextureSection
 {
@@ -39,32 +39,30 @@ export class TextureSection
 
     GetTextureData()
     {
-		const data = this.buffer.slice(this.section.offset + 24, this.section.offset + this.section.size - 24)
+		const data = this.buffer.slice(this.section.offset + 24, this.section.offset + 24 + this.bitmapSize)
 		return new Uint8Array(data, 0, data.length)
     }
 
     LoadTexture()
     {
 		this.texture = new PcdTextureLoader().parse(this)
-
-		this.texture.wrapS = RepeatWrapping
-		this.texture.wrapT = RepeatWrapping
     }
 }
 
 export enum D3DFORMAT
 {
-    D3DFMT_DXT1 = 0x31545844,
-    D3DFMT_DXT5 = 0x35545844
+    D3DFMT_DXT1     = 0x31545844,
+    D3DFMT_DXT5     = 0x35545844,
+    D3DFMT_A8R8G8B8 = 0x15
 }
 
 // Based on https://github.com/mrdoob/three.js/blob/master/examples/jsm/loaders/DDSLoader.js
-export class PcdTextureLoader //extends CompressedTextureLoader
+export class PcdTextureLoader
 {
     parse(texture: TextureSection): CompressedTexture
     {
         let blockBytes
-		let format: CompressedPixelFormat
+		let format
 
         switch(texture.format)
         {
@@ -72,12 +70,16 @@ export class PcdTextureLoader //extends CompressedTextureLoader
                 blockBytes = 8
                 format = RGB_S3TC_DXT1_Format
 
-                break;
+                break
             case D3DFORMAT.D3DFMT_DXT5:
                 blockBytes = 16
                 format = RGBA_S3TC_DXT5_Format
 
-                break;
+                break
+            case D3DFORMAT.D3DFMT_A8R8G8B8:
+                format = RGBAFormat
+
+                break
 			default:
 				throw "Format not implemented"
         }
@@ -91,22 +93,61 @@ export class PcdTextureLoader //extends CompressedTextureLoader
 
 		const data = texture.GetTextureData()
 
-		for ( let i = 0; i < mipmapCount; i ++ ) {
-			const dataLength = Math.max( 4, width ) / 4 * Math.max( 4, height ) / 4 * blockBytes
-			const byteArray = new Uint8Array(data.buffer, dataOffset, dataLength)
-			const mipmap = { data: byteArray, width: width, height: height }
+		for (let i = 0; i < mipmapCount; i++)
+		{
+			let dataLength, byteArray
+			
+			if (format == RGBAFormat)
+			{
+				byteArray = this.loadARGBMip(data.buffer, dataOffset, width, height)
+				dataLength = byteArray.length
+			}
+			else
+			{
+				dataLength = Math.max(4, width) / 4 * Math.max(4, height) / 4 * blockBytes
+				byteArray = new Uint8Array(data.buffer, dataOffset, dataLength)
+			}
+
+			const mipmap = {data: byteArray, width: width, height: height}
 			mipmaps.push(mipmap)
 
 			dataOffset += dataLength
 
-			width = Math.max( width >> 1, 1 )
-			height = Math.max( height >> 1, 1 )
+			width = Math.max(width >> 1, 1)
+			height = Math.max(height >> 1, 1)
 		}
 
 		const compressedTexture = new CompressedTexture(mipmaps, texture.width, texture.height, format)
 		compressedTexture.minFilter = LinearFilter
+		compressedTexture.wrapS = RepeatWrapping
+		compressedTexture.wrapT = RepeatWrapping
+        
 		compressedTexture.needsUpdate = true
 
 		return compressedTexture
+    }
+    
+    // copied from orginal three.js DDSLoader
+    loadARGBMip(buffer, dataOffset, width, height)
+    {
+        const dataLength = width * height * 4
+        const srcBuffer = new Uint8Array(buffer, dataOffset, dataLength)
+        const byteArray = new Uint8Array(dataLength)
+        let dst = 0
+        let src = 0
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const a = srcBuffer[src]; src++
+                const r = srcBuffer[src]; src++
+                const g = srcBuffer[src]; src++
+                const b = srcBuffer[src]; src++
+                byteArray[dst] = r; dst++	//r
+                byteArray[dst] = g; dst++	//g
+                byteArray[dst] = b; dst++	//b
+                byteArray[dst] = a; dst++	//a
+            }
+        }
+    
+        return byteArray;
     }
 }
