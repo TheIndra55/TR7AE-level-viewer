@@ -16,6 +16,9 @@ export class Level
 	backColorG: number
 	backColorB: number
 
+	numTerrainLights: number
+	terrainLights: Pointer
+
 	constructor(sections: SectionList)
 	{
 		this.sections = sections
@@ -29,11 +32,25 @@ export class Level
 		this.backColorR = this.buffer.readUInt8()
 		this.backColorG = this.buffer.readUInt8()
 		this.backColorB = this.buffer.readUInt8()
+
+		this.buffer.skip(201)
+		this.numTerrainLights = this.buffer.readInt32LE();
+		this.terrainLights = Pointer.Here(this.sections, this.section)
 	}
 
 	GetTerrain(): Terrain
 	{
 		return new Terrain(this.sections, this.terrain)
+	}
+
+	GetLights(): TerrainLight[]
+	{
+		if (this.terrainLights == null)
+		{
+			return []
+		}
+
+		return TerrainLight.ReadLights(this.sections, this.terrainLights, this.numTerrainLights);
 	}
 }
 
@@ -216,6 +233,52 @@ export class TerrainGroup
 		}
 
 		return terrainGroups
+	}
+}
+
+export class TerrainLight
+{
+	x: number
+	y: number
+	z: number
+	radius: number
+	r: number
+	g: number
+	b: number
+	type: number
+
+	constructor(sections: SectionList)
+	{
+		const buffer = sections.buffer
+
+		this.x = buffer.readInt32LE()
+		this.y = buffer.readInt32LE()
+		this.z = buffer.readInt32LE()
+
+		this.radius = buffer.readInt32LE()
+
+		this.r = buffer.readUInt8()
+		this.g = buffer.readUInt8()
+		this.b = buffer.readUInt8()
+		this.type = buffer.readUInt8()
+
+		buffer.skip(16)
+	}
+
+	static ReadLights(sections: SectionList, pointer: Pointer, numLights: number): TerrainLight[]
+	{
+		const buffer = sections.buffer
+		const lights = []
+
+		buffer.seek(pointer.section.offset + pointer.offset)
+
+		for (let i = 0; i < numLights; i++)
+		{
+			const light = new TerrainLight(sections)
+			lights.push(light)
+		}
+
+		return lights
 	}
 }
 

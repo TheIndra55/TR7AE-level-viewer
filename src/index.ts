@@ -131,14 +131,16 @@ fetch(level)
 
 	const terraingroups = terrain.GetTerrainGroups()
 	const intros = terrain.GetIntros()
+	const lights = level.GetLights()
 
+	console.log(lights)
 	console.log(intros)
 
 	const playerIntro = intros.find(x => x.id == -1)
 	camera.position.set(-(playerIntro.position.x) / 10, (playerIntro.position.z / 10) + 50, playerIntro.position.y / 10)
 
 	const vertices = vertexToVertices(vertexes)
-	for(let terraingroup of terraingroups)
+	for (let terraingroup of terraingroups)
 	{
 		faces = []
 		groups = []
