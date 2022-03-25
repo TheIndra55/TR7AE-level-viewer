@@ -4,11 +4,11 @@
   "description": "",
   "dependencies": {
     "buffer": "^6.0.3",
-    "dat.gui": "^0.7.7",
-    "esbuild": "^0.14.11",
+    "dat.gui": "^0.7.9",
+    "esbuild": "^0.14.27",
     "stats.js": "^0.17.0",
-    "three": "^0.130.1",
-    "typescript": "^4.3.5"
+    "three": "^0.139.0",
+    "typescript": "^4.6.3"
   },
   "scripts": {
     "build": "esbuild src/index.ts --bundle --minify --sourcemap --outfile=dist/bundle.js"
@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/three": "^0.130.0",
+    "@types/three": "^0.138.0",
     "@types/stats.js": "^0.17.0"
   }
 }

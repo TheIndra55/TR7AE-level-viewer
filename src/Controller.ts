@@ -1,5 +1,7 @@
 import { Camera, Vector3, Clock } from "three"
-import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls"
+
+// workaround for 'The module "./examples/jsm/controls/PointerLockControls" was not found on the file system'
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js"
 
 export class Controller
 {
