@@ -1,23 +1,21 @@
 import { MeshBasicMaterial } from "three"
 import { BufferReader } from "./BufferReader"
-import { Pointer, Section, SectionList } from "./Section"
+import { Section, SectionList } from "./Section"
 
 export class XboxPcMaterialList
 {
     sections: SectionList
-    section: Section
 
     buffer: BufferReader
 
 	materials: XboxPcMaterialStripList[]
 
-	constructor(sections: SectionList, pointer: Pointer)
+	constructor(sections: SectionList, pointer: number)
     {
         this.sections = sections
-        this.section = pointer.section
         this.buffer = sections.buffer
 
-		this.buffer.seek(this.section.offset + pointer.offset)
+		this.buffer.seek(pointer)
 
 		const numMaterials = this.buffer.readInt32LE()
 		this.materials = []

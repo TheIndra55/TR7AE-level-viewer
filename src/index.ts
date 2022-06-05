@@ -7,6 +7,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer, BufferGeometry, MeshBasicMater
 import Stats from "stats.js"
 import { GUI } from "dat.gui"
 import { Controller } from "./Controller"
+import { Buffer } from "buffer"
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
@@ -49,7 +50,7 @@ function vertexToVertices(vertexes: TerrainRenderVertexList): Int16Array
 
 function processTerrainGroup(terraingroup: TerrainGroup)
 {
-	if(terraingroup.octreeSphere != null)
+	if(terraingroup.octreeSphere != 0)
 	{
 		createMaterials(terraingroup)
 
@@ -84,7 +85,7 @@ function processOctrees(terraingroup: TerrainGroup, octree: OctreeSphere)
 		processOctrees(terraingroup, sphere)
 	}
 
-	if(octree.strip)
+	if(octree.strip != 0)
 	{
 		for(let strip of octree.GetTerrainTextureStrips())
 		{
@@ -118,7 +119,7 @@ fetch(level)
 	setOverlay("Loading...")
 
 	// load the downloaded file as DRM/SectionList
-	const drm = new SectionList(x)
+	const drm = new SectionList(Buffer.from(x))
 	
 	const level = new Level(drm)
 	drm.LoadTextures()

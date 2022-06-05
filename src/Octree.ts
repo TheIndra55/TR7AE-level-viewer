@@ -1,10 +1,9 @@
-import { Pointer, SectionList, Section } from "./Section"
+import { SectionList, Section } from "./Section"
 import { BufferReader } from "./BufferReader"
 
 export class OctreeSphere
 {
 	sections: SectionList
-	section: Section
 	buffer: BufferReader
 
 	x: number
@@ -12,24 +11,23 @@ export class OctreeSphere
 	z: number
 	r: number
 
-	strip: Pointer
+	strip: number
 	spheres: OctreeSphere[]
 
-	constructor(sections: SectionList, pointer: Pointer)
+	constructor(sections: SectionList, pointer: number)
 	{
 		this.sections = sections
 		this.buffer = sections.buffer
-		this.section = pointer.section
 		this.spheres = []
 
-		this.buffer.seek(pointer.section.offset + pointer.offset)
+		this.buffer.seek(pointer)
 
 		this.x = this.buffer.readFloatLE()
 		this.y = this.buffer.readFloatLE()
 		this.z = this.buffer.readFloatLE()
 		this.r = this.buffer.readFloatLE()
 
-		this.strip = Pointer.Here(sections, this.section)
+		this.strip = this.buffer.readUInt32LE()
 
 		const numSpheres = this.buffer.readInt32LE()
 
@@ -40,8 +38,8 @@ export class OctreeSphere
 
 		for(let i = 0; i < numSpheres; i++)
 		{
-			const spherePointer = Pointer.Here(sections, this.section)
-			if(spherePointer == null)
+			const spherePointer = this.buffer.readUInt32LE()
+			if(spherePointer == 0)
 			{
 				continue
 			}
@@ -57,7 +55,7 @@ export class OctreeSphere
 
 	GetTerrainTextureStrips(): TerrainTextureStripInfo[]
 	{
-		if(this.strip == null)
+		if(this.strip == 0)
 		{
 			return []
 		}
@@ -66,7 +64,7 @@ export class OctreeSphere
 		let strip = new TerrainTextureStripInfo(this.sections, this.strip)
 		strips.push(strip)
 
-		while(strip.nextTexture != null)
+		while(strip.nextTexture != 0 && strip.vertexCount != 0)
 		{
 			strip = new TerrainTextureStripInfo(this.sections, strip.nextTexture)
 			strips.push(strip)
@@ -79,34 +77,33 @@ export class OctreeSphere
 export class TerrainTextureStripInfo
 {
 	sections: SectionList
-	section: Section
 	buffer: BufferReader
 
-	nextTexture: Pointer
+    vertexCount: number
+	nextTexture: number
 	stripVertex: number[]
 
 	vmoObjectIndex: number
 	matIdx: number
 
-	constructor(sections: SectionList, pointer: Pointer)
+	constructor(sections: SectionList, pointer: number)
 	{
 		this.sections = sections
 		this.buffer = sections.buffer
-		this.section = pointer.section
 		this.stripVertex = []
 
-		this.buffer.seek(pointer.section.offset + pointer.offset)
+		this.buffer.seek(pointer)
 
-		const vertexCount = this.buffer.readInt32LE()
+		this.vertexCount = this.buffer.readInt32LE()
 		this.vmoObjectIndex = this.buffer.readInt32LE()
 
 		this.buffer.skip(12)
 		this.matIdx = this.buffer.readInt32LE()
 		
 		this.buffer.skip(16)
-		this.nextTexture = Pointer.Here(sections, this.section)
+		this.nextTexture = this.buffer.readUInt32LE()
 
-		for(let i = 0; i < vertexCount; i++)
+		for(let i = 0; i < this.vertexCount; i++)
 		{			
 			this.stripVertex.push(this.buffer.readInt16LE())
 		}

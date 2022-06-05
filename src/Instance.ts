@@ -1,10 +1,9 @@
 import { BufferReader } from "./BufferReader";
 import { Vector } from "./Level";
-import { Pointer, Section, SectionList } from "./Section";
+import { Section, SectionList } from "./Section";
 
 export class Intro {
     buffer: BufferReader
-    section: Section
 
     position: Vector
     rotation: Vector
@@ -27,11 +26,11 @@ export class Intro {
         this.buffer.skip(24)
     }
 
-    static ReadIntros(sections: SectionList, pointer: Pointer, numIntros: number): Intro[] {
+    static ReadIntros(sections: SectionList, pointer: number, numIntros: number): Intro[] {
         const buffer = sections.buffer
         const intros = []
 
-        buffer.seek(pointer.section.offset + pointer.offset)
+        buffer.seek(pointer)
 
         for (let i = 0; i < numIntros; i++)
         {

@@ -1,77 +1,25 @@
 import { Buffer } from "buffer"
-import { CompressedTexture } from "three"
 import { BufferReader } from "./BufferReader"
 import { TextureSection } from "./Texture"
 
-export class Section
+interface Section
 {
+    offset: number
+    size: number
+    type: SectionType
+    id: number
+
+    numRelocations: number
+    relocations: Relocation[]
+}
+
+interface Relocation
+{
+	section: number
 	offset: number
-	size: number
-	type: number
-
-	index: number
-
-	numRelocations: number
-	relocations: Relocation[]
-	id: number
-
-	constructor()
-	{
-		this.relocations = []
-	}
-
-	static ReadSection(buffer: BufferReader): Section
-	{
-		const section = new Section()
-		section.size = buffer.readUInt32LE()
-		section.type = buffer.readInt8()
-
-		buffer.skip(3)
-		const packedData = buffer.readInt32LE()
-		section.numRelocations = packedData >> 8
-		section.id = buffer.readUInt32LE()
-		buffer.skip(4)
-
-		return section
-	}
-
-	ReadRelocations(buffer: BufferReader)
-	{
-		for(let i = 0; i < this.numRelocations; i++)
-		{
-			const relocation = new Relocation()
-
-			const typeAndSectionInfo = buffer.readInt16LE()
-			buffer.skip(2)
-
-			relocation.section = typeAndSectionInfo >> 3
-			relocation.offset = buffer.readUInt32LE();
-
-			this.relocations.push(relocation)
-		}
-
-		this.offset = buffer.tell()
-	}
-
-	GetRelocationForOffset(offset: number): Relocation
-	{
-		return this.relocations.find(x => x.offset == offset)
-	}
-
-	GetRelocationForPosition(position: number): Relocation
-	{
-		const offset = position - this.offset
-		return this.relocations.find(x => x.offset == offset)
-	}
 }
 
-class Relocation
-{
-	section: number;
-	offset: number;
-}
-
-export enum SectionType
+enum SectionType
 {
 	General = 0,
 	Empty = 1,
@@ -79,41 +27,88 @@ export enum SectionType
 	Texture = 5,
 }
 
-export class SectionList
+class SectionList
 {
 	sections: Section[]
 	buffer: BufferReader
 
-	constructor(data: ArrayBuffer)
+	constructor(data: Buffer)
 	{
-		const buf = Buffer.from(data)
+        const buffer = new BufferReader(data)
 
-		this.buffer = new BufferReader(buf);
+		this.buffer = buffer
 		this.sections = []
 
-		const version = this.buffer.readInt32LE()
-		if(version != 14)
+		const version = buffer.readInt32LE()
+
+		if (version != 14)
 		{
-			throw `DRM file has wrong version, expected 14 but got ${version}`
+			throw `Wrong DRM version, expected 14 but got ${version}`
 		}
 
-		const numSections = this.buffer.readUInt32LE();
-		for(let i = 0; i < numSections; i++)
+		const numSections = buffer.readUInt32LE();
+
+        // read all section headers
+		for (let i = 0; i < numSections; i++)
 		{
-			const section = Section.ReadSection(this.buffer);
-			section.index = i
+            // @ts-ignore
+            let section: Section = { relocations: [] }
 
-			this.sections.push(section)
+            section.size = buffer.readUInt32LE()
+            section.type = buffer.readUInt8();
+
+            buffer.skip(3)
+
+            const packedData = buffer.readUInt32LE()
+            section.numRelocations = packedData >> 8
+            section.id = buffer.readUInt32LE()
+
+            buffer.skip(4)
+
+            this.sections.push(section)
 		}
-
+        
 		for(let section of this.sections)
 		{
-			section.ReadRelocations(this.buffer);
+            // read relocations
+            for (let i = 0; i < section.numRelocations; i++)
+            {
+                const typeAndSectionInfo = buffer.readUInt16LE()
+                buffer.skip(2)
+                const offset = buffer.readUInt32LE()
+
+                const relocation: Relocation = { section: typeAndSectionInfo >> 3, offset }
+                section.relocations.push(relocation)
+            }
+
+            section.offset = buffer.position
+
+            // skip past section data
 			this.buffer.skip(section.size);
 		}
 
-		console.log(`numSections = ${numSections}`)
+        // relocate file
+        for (let section of this.sections)
+        {
+            this.Relocate(section)
+        }
 	}
+
+    private Relocate(section: Section)
+    {
+        // orginal buffer to write to
+        const buffer = this.buffer.buffer
+
+        for (let relocation of section.relocations)
+        {
+            const position = section.offset + relocation.offset
+            const otherSection = this.sections[relocation.section]
+
+            // read the pointer and write the pointer back with section offset added
+            const offset = buffer.readUInt32LE(position)
+            buffer.writeUInt32LE(otherSection.offset + offset, position)
+        }
+    }
 
 	LoadTextures()
 	{
@@ -135,38 +130,9 @@ export class SectionList
 	}
 }
 
-export class TextureStore
+class TextureStore
 {
 	static textures: TextureSection[] = []
 }
 
-export class Pointer
-{
-	index: number
-	offset: number
-
-	section: Section;
-
-	constructor(sections: SectionList, section: number, offset: number)
-	{
-		this.index = section
-		this.offset = offset
-
-		this.section = sections.GetSection(this.index)
-	}
-
-	static Here(sections: SectionList, section: Section): Pointer
-	{
-		const buffer = sections.buffer
-		const offset = buffer.tell() - section.offset
-		const relocation = section.GetRelocationForOffset(offset)
-
-		if(relocation == null)
-		{
-			buffer.readUInt32LE()
-			return null
-		}
-
-		return new Pointer(sections, relocation.section, buffer.readUInt32LE())
-	}
-}
+export { Section, Relocation, SectionType, SectionList, TextureStore }
