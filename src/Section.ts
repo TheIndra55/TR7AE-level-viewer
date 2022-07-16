@@ -32,9 +32,18 @@ class SectionList
 	sections: Section[]
 	buffer: BufferReader
 
-	constructor(data: Buffer)
+	constructor(data: Buffer | ArrayBuffer)
 	{
-        const buffer = new BufferReader(data)
+		let buffer: BufferReader
+
+		if (data instanceof ArrayBuffer)
+		{
+			buffer = new BufferReader(Buffer.from(data))
+		}
+		else
+		{
+			buffer = new BufferReader(data)
+		}
 
 		this.buffer = buffer
 		this.sections = []
@@ -127,6 +136,11 @@ class SectionList
 	GetSection(index: number)
 	{
 		return this.sections[index]
+	}
+
+	get loadData()
+	{
+		return this.sections[0].offset
 	}
 }
 
