@@ -1,43 +1,29 @@
-import { BufferReader } from "./BufferReader";
-import { Vector } from "./Level";
-import { Section, SectionList } from "./Section";
+import { Object3D, Vector3 } from "three";
 
-export class Intro {
-    buffer: BufferReader
-
-    position: Vector
-    rotation: Vector
+interface Intro
+{
+    position: Vector3
+    rotation: Vector3
     object: number
     id: number
+}
 
-    constructor(sections: SectionList) {
-        this.buffer = sections.buffer
+class Instance
+{
+    intro: number
+    mesh: Object3D
 
-        this.rotation = this.buffer.readVectorLE()
-        this.buffer.skip(4)
-        this.position = this.buffer.readVectorLE()
-
-        this.buffer.skip(52)
-        this.object = this.buffer.readInt16LE()
-
-        this.buffer.skip(2)
-        this.id = this.buffer.readInt32LE()
-
-        this.buffer.skip(24)
+    constructor(intro: number, mesh: Object3D)
+    {
+        this.intro = intro
+        this.mesh = mesh
     }
 
-    static ReadIntros(sections: SectionList, pointer: number, numIntros: number): Intro[] {
-        const buffer = sections.buffer
-        const intros = []
-
-        buffer.seek(pointer)
-
-        for (let i = 0; i < numIntros; i++)
-        {
-            const intro = new Intro(sections)
-            intros.push(intro)
-        }
-
-        return intros
+    // set the position in game coordinates
+    set position(position: Vector3)
+    {
+        this.mesh.position.set(-(position.x) / 10, position.z / 10, position.y / 10)
     }
 }
+
+export { Intro, Instance }

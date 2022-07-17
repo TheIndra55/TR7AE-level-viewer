@@ -1,5 +1,5 @@
 import { Buffer } from "buffer"
-import { Vector } from "./Level";
+import { Vector3 } from "three";
 
 export class BufferReader {
 	buffer: Buffer;
@@ -59,8 +59,8 @@ export class BufferReader {
 		return ret
 	}
 
-	readVectorLE(): Vector {
-		return new Vector(this.readFloatLE(), this.readFloatLE(), this.readFloatLE())
+	readVector3LE(): Vector3 {
+		return new Vector3(this.readFloatLE(), this.readFloatLE(), this.readFloatLE())
 	}
 	
 	seek(position: number) {

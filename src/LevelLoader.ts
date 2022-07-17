@@ -1,5 +1,6 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial } from "three"
+import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Object3D } from "three"
 import { BufferReader } from "./BufferReader"
+import { Intro } from "./Instance"
 import { SectionList, TextureStore } from "./Section"
 
 class LevelLoader extends Loader
@@ -24,7 +25,7 @@ class LevelLoader extends Loader
         }, onProgress, onError)
     }
 
-    parse(data: ArrayBuffer)
+    parse(data: ArrayBuffer): LoadedTerrain
     {
         const object = new SectionList(data)
         object.LoadTextures()
@@ -66,7 +67,7 @@ class LevelLoader extends Loader
             container.add(group)
         }
 
-        return container
+        return { container, intros: terrain.intros }
     }
 
     private readTerrain(buffer: BufferReader, offset: number): Terrain
@@ -107,11 +108,32 @@ class LevelLoader extends Loader
             terrain.addVertex({ x, y, z, u, v, color })
         }
 
+        // read terraingroups
         for (let i = 0; i < numTerrainGroups; i++)
         {
             const terrainGroup = this.readTerrainGroup(buffer, terrainGroups + (i * 176))
 
             terrain.addTerrainGroup(terrainGroup)
+        }
+
+        // read intros
+        buffer.seek(intros)
+        for (let i = 0; i < numIntros; i++)
+        {
+            const rotation = buffer.readVector3LE()
+            buffer.skip(4)
+            const position = buffer.readVector3LE()
+
+            buffer.skip(52)
+            const object = buffer.readInt16LE()
+
+            buffer.skip(2)
+            const id = buffer.readInt32LE()
+
+            var intro: Intro = { position, rotation, object, id }
+            terrain.intros.push(intro)
+
+            buffer.skip(24)
         }
 
         return terrain
@@ -212,12 +234,14 @@ class Terrain
     vertices: number[]
     uvs: number[]
     terrainGroups: TerrainGroup[]
+    intros: Intro[]
 
     constructor()
     {
         this.vertices = []
         this.uvs = []
         this.terrainGroups = []
+        this.intros = []
     }
 
     addVertex(vertex: TerrainVertex)
@@ -289,4 +313,10 @@ class TerrainVertex
     v: number
 }
 
-export { LevelLoader }
+interface LoadedTerrain
+{
+    container: Object3D
+    intros: Intro[]
+}
+
+export { LevelLoader, LoadedTerrain }

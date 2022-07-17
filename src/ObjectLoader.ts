@@ -155,7 +155,7 @@ class Model
 
     addVertex(vertex: ModelVertex)
     {
-        this.vertices.push(-vertex.x, vertex.z, vertex.y)
+        this.vertices.push(-(vertex.x) / 10, vertex.z / 10, vertex.y / 10)
         this.uvs.push(float16ToFloat32(vertex.u), float16ToFloat32(vertex.v))
     }
 
