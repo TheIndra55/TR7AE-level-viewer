@@ -1,5 +1,4 @@
-import { Buffer } from "buffer";
-import { BufferGeometry, FileLoader, Float16BufferAttribute, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial } from "three";
+import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial } from "three";
 import { BufferReader } from "./BufferReader";
 import { SectionList, TextureStore } from "./Section"
 
