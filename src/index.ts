@@ -1,4 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, Vector3 } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, Object3D } from "three"
 
 import Stats from "stats.js"
 import { Controller } from "./Controller"

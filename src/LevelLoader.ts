@@ -1,4 +1,4 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Object3D } from "three"
+import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Object3D, Vector3 } from "three"
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
 import { SectionList, TextureStore } from "./Section"
@@ -60,6 +60,7 @@ class LevelLoader extends Loader
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
                 const mesh = new Mesh(geometry, new MeshBasicMaterial({map: texture?.texture, alphaTest: 1}))
+                mesh.scale.divide(new Vector3(10, 10, 10))
 
                 group.add(mesh)
             }
@@ -250,7 +251,7 @@ class Terrain
         // the other functions only read the game values and here we somewhat
         // convert it to right units and put it all in a single buffer to easily
         // pass it to Three.js
-        this.vertices.push((-vertex.x) / 10, vertex.z / 10, vertex.y / 10)
+        this.vertices.push(-vertex.x, vertex.z, vertex.y)
         this.uvs.push(vertex.u * 0.00024414062, vertex.v * 0.00024414062)
     }
 
