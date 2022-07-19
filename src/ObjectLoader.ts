@@ -1,4 +1,4 @@
-import { Bone, BufferGeometry, FileLoader, Float32BufferAttribute, Int16BufferAttribute, Loader, LoadingManager, MeshBasicMaterial, Skeleton, SkinnedMesh, Vector3 } from "three";
+import { Bone, BufferGeometry, FileLoader, Float32BufferAttribute, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Skeleton, SkinnedMesh, Vector3 } from "three";
 import { BufferReader } from "./BufferReader";
 import { SectionList, TextureStore } from "./Section"
 
@@ -72,9 +72,9 @@ class ObjectLoader extends Loader
         geometry.setIndex([...indices])
         geometry.groups = [...groups]
 
-        const mesh = new SkinnedMesh(geometry, materials)
-        mesh.add(bones[0])
-        mesh.bind(skeleton)
+        const mesh = new Mesh(geometry, materials)
+        //mesh.add(bones[0])
+        //mesh.bind(skeleton)
 
         mesh.scale.divide(new Vector3(10, 10, 10))
 
