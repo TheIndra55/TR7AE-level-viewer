@@ -1,6 +1,7 @@
 import { Bone, BufferGeometry, FileLoader, Float32BufferAttribute, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Skeleton, SkinnedMesh, Vector3 } from "three";
 import { BufferReader } from "./BufferReader";
 import { SectionList, TextureStore } from "./Section"
+import { applyTPageFlags } from "./Util";
 
 class ObjectLoader extends Loader
 {
@@ -58,14 +59,15 @@ class ObjectLoader extends Loader
 
         for (let strip of model.strips)
         {
-            groups.push({ start: indices.length, count: strip.indices.length, materialIndex: strip.texture })
+            groups.push({ start: indices.length, count: strip.indices.length, materialIndex: strip.tpageid })
             indices.push(...strip.indices)
 
-            if (!materials[strip.texture])
+            if (!materials[strip.tpageid])
             {
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
-                materials[strip.texture] = new MeshBasicMaterial({map: texture.texture})
+                materials[strip.tpageid] = new MeshBasicMaterial({map: texture.texture})
+                applyTPageFlags(materials[strip.tpageid], strip.tpageid)
             }
         }
 

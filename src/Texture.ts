@@ -1,6 +1,6 @@
 import { BufferReader } from "./BufferReader";
 import { Section, SectionList } from "./Section";
-import { RGB_S3TC_DXT1_Format, RGBA_S3TC_DXT5_Format, CompressedTexture, LinearFilter, RepeatWrapping, RGBAFormat } from "three"
+import { RGBA_S3TC_DXT5_Format, CompressedTexture, LinearFilter, RepeatWrapping, RGBAFormat, RGBA_S3TC_DXT1_Format } from "three"
 
 export class TextureSection
 {
@@ -68,7 +68,7 @@ export class PcdTextureLoader
         {
             case D3DFORMAT.D3DFMT_DXT1:
                 blockBytes = 8
-                format = RGB_S3TC_DXT1_Format
+                format = RGBA_S3TC_DXT1_Format
 
                 break
             case D3DFORMAT.D3DFMT_DXT5:

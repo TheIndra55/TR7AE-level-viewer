@@ -2,6 +2,7 @@ import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferA
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
 import { SectionList, TextureStore } from "./Section"
+import { applyTPageFlags } from "./Util"
 
 class LevelLoader extends Loader
 {
@@ -59,7 +60,10 @@ class LevelLoader extends Loader
                 
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
-                const mesh = new Mesh(geometry, new MeshBasicMaterial({map: texture?.texture, alphaTest: 1}))
+                const material = new MeshBasicMaterial({map: texture?.texture})
+                applyTPageFlags(material, strip.tpageid)
+
+                const mesh = new Mesh(geometry, material)
                 mesh.scale.divide(new Vector3(10, 10, 10))
 
                 group.add(mesh)

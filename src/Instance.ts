@@ -24,6 +24,11 @@ class Instance
     {
         this.mesh.position.set(-(position.x) / 10, position.z / 10, position.y / 10)
     }
+
+    set rotation(rotation: Vector3)
+    {
+        this.mesh.rotation.setFromVector3(new Vector3(-rotation.x, rotation.z, rotation.y))
+    }
 }
 
 export { Intro, Instance }

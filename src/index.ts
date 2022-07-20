@@ -68,7 +68,9 @@ class Viewer
 
         this.objectLoader.load(object + ".drm", function(mesh: Object3D) {
             const instance = new Instance(intro.id, mesh)
+
             instance.position = intro.position
+            instance.rotation = intro.rotation
 
             scope.instances.push(instance)
             scope.scene.add(instance.mesh)
