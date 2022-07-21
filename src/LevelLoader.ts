@@ -65,7 +65,7 @@ class LevelLoader extends Loader
             for (let strip of terrainGroup.strips)
             {
                 const geometry = new BufferGeometry()
-                
+
                 geometry.setAttribute("position", positions)
                 geometry.setAttribute("uv", uvs)
 
@@ -202,12 +202,11 @@ class LevelLoader extends Loader
         for (let i = 0; i < numMaterials; i++)
         {
             const tpageid = buffer.readUInt32LE()
-            buffer.skip(4)
-
+            const flags = buffer.readUInt32LE()
             const vertexBaseOffset = buffer.readUInt32LE()
 
             // create a strip for each material
-            const strip = new Strip(tpageid, vertexBaseOffset)
+            const strip = new Strip(tpageid, vertexBaseOffset, flags)
 
             terrainGroup.addStrip(strip)
 
@@ -259,12 +258,20 @@ class LevelLoader extends Loader
 
             buffer.skip(16)
             strip = buffer.readUInt32LE()
+            
+            const material = terrainGroup.strips[matIdx]
+
+            // skip vmo strips until these are implemented
+            if ((material.flags & 0x1C) != 0)
+            {
+                continue
+            }
 
             for (let i = 0; i < vertexCount; i++)
             {
                 const indice = buffer.readInt16LE()
 
-                terrainGroup.strips[matIdx].addIndice(indice)
+                material.addIndice(indice)
             }
         }
     }
@@ -329,13 +336,15 @@ class Strip
     tpageid: number
     texture: number
     baseOffset: number
+    flags: number
 
-    constructor(tpageid: number, baseOffset: number)
+    constructor(tpageid: number, baseOffset: number, flags: number)
     {
         this.indices = []
 
         this.tpageid = tpageid
         this.baseOffset = baseOffset
+        this.flags = flags
         this.texture = tpageid & 0x1FFF
     }
 
