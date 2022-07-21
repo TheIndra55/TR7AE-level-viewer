@@ -5,9 +5,8 @@ Mostly a fun side project to understand the level files better and mess with bro
 
 ## Todo
 
+* Fix TPage flags setting right material properties
 * BGObjects
-* Fix Z-fighting
-* Refactor code
 
 ## Build
 
@@ -23,6 +22,4 @@ npm run build
 
 ## Screenshots
 
-![flashback1](https://user-images.githubusercontent.com/15322107/150593262-df54fa30-f3bb-4810-869e-3cbce7945831.png)
-![st francis folly](https://user-images.githubusercontent.com/15322107/150593561-99010b01-8451-4839-8158-1341c970b12c.png)
-![container1](https://user-images.githubusercontent.com/15322107/127756964-369fb9f2-a995-4622-83a8-fa2cba6680ac.png)
+![mansion1](https://user-images.githubusercontent.com/15322107/180186903-f17ec2e9-0b69-44f6-a265-7deb2f21ebae.png)

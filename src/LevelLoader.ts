@@ -36,10 +36,23 @@ class LevelLoader extends Loader
         buffer.seek(object.loadData)
 
         const terrain = this.readTerrain(buffer, buffer.readUInt32LE())
+
+        // read unit name
+        buffer.seek(object.loadData + 128)
+        buffer.seek(buffer.readUInt32LE())
+
+        const name = buffer.readString()
+
         const container = new Group()
 
         for (let terrainGroup of terrain.terrainGroups)
         {
+            // ignore skydome terraingroups
+            if ((terrainGroup.flags & 0x200000) > 0)
+            {
+                continue
+            }
+
             const group = new Group()
             group.position.set(-(terrainGroup.x) / 10, terrainGroup.z / 10, terrainGroup.y / 10)
 
@@ -72,7 +85,7 @@ class LevelLoader extends Loader
             container.add(group)
         }
 
-        return { container, intros: terrain.intros }
+        return { container, intros: terrain.intros, portals: terrain.portals, name }
     }
 
     private readTerrain(buffer: BufferReader, offset: number): Terrain
@@ -85,7 +98,9 @@ class LevelLoader extends Loader
         const numIntros = buffer.readInt32LE()
         const intros = buffer.readUInt32LE()
 
-        buffer.skip(8)
+        const numStreamUnitPortals = buffer.readInt32LE()
+        const streamUnitPortals = buffer.readUInt32LE()
+
         const numTerrainGroups = buffer.readInt32LE()
         const terrainGroups = buffer.readUInt32LE()
 
@@ -141,6 +156,24 @@ class LevelLoader extends Loader
             buffer.skip(24)
         }
 
+        // read portals
+        buffer.seek(streamUnitPortals)
+        for (let i = 0; i < numStreamUnitPortals; i++)
+        {
+            const destination = buffer.readString(30)
+
+            buffer.skip(18)
+
+            const min = buffer.readVector3LE()
+
+            buffer.skip(4)
+            const max = buffer.readVector3LE()
+
+            terrain.portals.push({ destination, min, max })
+
+            buffer.skip(84)
+        }
+
         return terrain
     }
 
@@ -154,7 +187,10 @@ class LevelLoader extends Loader
         terrainGroup.y = buffer.readFloatLE()
         terrainGroup.z = buffer.readFloatLE()
 
-        buffer.skip(56)
+        buffer.skip(20)
+        terrainGroup.flags = buffer.readInt32LE()
+
+        buffer.skip(32)
         const octree = buffer.readUInt32LE()
 
         buffer.skip(72)
@@ -240,6 +276,7 @@ class Terrain
     uvs: number[]
     terrainGroups: TerrainGroup[]
     intros: Intro[]
+    portals: StreamPortal[]
 
     constructor()
     {
@@ -247,6 +284,7 @@ class Terrain
         this.uvs = []
         this.terrainGroups = []
         this.intros = []
+        this.portals = []
     }
 
     addVertex(vertex: TerrainVertex)
@@ -270,6 +308,7 @@ class TerrainGroup
     x: number
     y: number
     z: number
+    flags: number
 
     strips: Strip[]
 
@@ -318,10 +357,19 @@ class TerrainVertex
     v: number
 }
 
-interface LoadedTerrain
+interface StreamPortal
 {
-    container: Object3D
-    intros: Intro[]
+    destination: string
+    min: Vector3
+    max: Vector3
 }
 
-export { LevelLoader, LoadedTerrain }
+interface LoadedTerrain
+{
+    name: string
+    container: Object3D
+    intros: Intro[]
+    portals: StreamPortal[]
+}
+
+export { LevelLoader, LoadedTerrain, StreamPortal }

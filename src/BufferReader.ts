@@ -62,6 +62,15 @@ export class BufferReader {
 	readVector3LE(): Vector3 {
 		return new Vector3(this.readFloatLE(), this.readFloatLE(), this.readFloatLE())
 	}
+
+	readString(length?: number): string {
+		const end = this.buffer.indexOf(0, this.position)
+		const ret = this.buffer.toString("ascii", this.position, end)
+
+		this.position += length ?? (end - this.position)
+
+		return ret;
+	}
 	
 	seek(position: number) {
 		this.position = position
