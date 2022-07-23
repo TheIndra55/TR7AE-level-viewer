@@ -1,4 +1,4 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Object3D, Vector3 } from "three"
+import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
 import { SectionList, TextureStore } from "./Section"
@@ -58,6 +58,7 @@ class LevelLoader extends Loader
 
             const positions = new Int16BufferAttribute(terrain.vertices, 3)
             const uvs = new Float32BufferAttribute(terrain.uvs, 2)
+            const colors = new Uint8BufferAttribute(terrain.colors, 3, true)
 
             // this code currently can make the renderer take really
             // long to generate the boundingspheres for large levels, might need to
@@ -68,12 +69,13 @@ class LevelLoader extends Loader
 
                 geometry.setAttribute("position", positions)
                 geometry.setAttribute("uv", uvs)
+                geometry.setAttribute("color", colors)
 
                 geometry.setIndex([...strip.indices])
                 
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
-                const material = new MeshBasicMaterial({map: texture?.texture})
+                const material = new MeshStandardMaterial({map: texture?.texture, vertexColors: true, flatShading: true})
                 applyTPageFlags(material, strip.tpageid)
 
                 const mesh = new Mesh(geometry, material)
@@ -284,6 +286,7 @@ class Terrain
     terrainGroups: TerrainGroup[]
     intros: Intro[]
     portals: StreamPortal[]
+    colors: number[]
 
     constructor()
     {
@@ -292,6 +295,7 @@ class Terrain
         this.terrainGroups = []
         this.intros = []
         this.portals = []
+        this.colors = []
     }
 
     addVertex(vertex: TerrainVertex)
@@ -302,6 +306,7 @@ class Terrain
         // pass it to Three.js
         this.vertices.push(-vertex.x, vertex.z, vertex.y)
         this.uvs.push(vertex.u * 0.00024414062, vertex.v * 0.00024414062)
+        this.colors.push(((vertex.color >> 16) & 0xff), ((vertex.color >> 8) & 0xff), (vertex.color & 0xff))
     }
 
     addTerrainGroup(terrainGroup: TerrainGroup)

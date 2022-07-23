@@ -1,4 +1,4 @@
-import { Bone, BufferGeometry, FileLoader, Float32BufferAttribute, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshBasicMaterial, Skeleton, SkinnedMesh, Vector3 } from "three";
+import { Bone, BufferGeometry, FileLoader, Float32BufferAttribute, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshStandardMaterial, Skeleton, Uint8BufferAttribute, Vector3 } from "three";
 import { BufferReader } from "./BufferReader";
 import { SectionList, TextureStore } from "./Section"
 import { applyTPageFlags } from "./Util";
@@ -52,6 +52,8 @@ class ObjectLoader extends Loader
         const geometry = new BufferGeometry()
         geometry.setAttribute("position", new Int16BufferAttribute(model.vertices, 3))
         geometry.setAttribute("uv", new Float32BufferAttribute(model.uvs, 2))
+        geometry.setAttribute("normal", new Float32BufferAttribute(model.normals, 3))
+        geometry.setAttribute("color", new Uint8BufferAttribute(model.colors, 3, true))
 
         const indices = []
         const groups = []
@@ -66,7 +68,7 @@ class ObjectLoader extends Loader
             {
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
-                materials[strip.tpageid] = new MeshBasicMaterial({map: texture.texture})
+                materials[strip.tpageid] = new MeshStandardMaterial({map: texture.texture, vertexColors: true})
                 applyTPageFlags(materials[strip.tpageid], strip.tpageid)
             }
         }
@@ -127,6 +129,9 @@ class ObjectLoader extends Loader
         const numVertices = buffer.readInt32LE()
         const vertices = buffer.readUInt32LE()
 
+        buffer.skip(60)
+        const vertexColors = buffer.readUInt32LE()
+
         // store old cursor position
         const cursor = buffer.position
 
@@ -163,11 +168,17 @@ class ObjectLoader extends Loader
         buffer.seek(vertices)
         for (let i = 0; i < numVertices; i++)
         {
+            // vertex position
             let x = buffer.readInt16LE() * scaleX
             let y = buffer.readInt16LE() * scaleY
             let z = buffer.readInt16LE() * scaleZ
 
-            buffer.skip(4)
+            // vertex normals
+            const nx = buffer.readInt8() / 127
+            const ny = buffer.readInt8() / 127
+            const nz = buffer.readInt8() / 127
+
+            buffer.skip(1)
             const segment = buffer.readInt16LE()
 
             const u = buffer.readUInt16LE()
@@ -192,10 +203,16 @@ class ObjectLoader extends Loader
             y = vec.z
             z = vec.y
 
-            model.addVertex({ x, y, z, u, v, segment })
+            model.addVertex({ x, y, z, u, v, segment, nx, ny, nz })
         }
 
-        buffer.seek(cursor + 48)
+        buffer.seek(vertexColors)
+        for (let i = 0; i < numVertices; i++)
+        {
+            model.addVertexColor(buffer.readUInt32LE())
+        }
+
+        buffer.seek(cursor - 16)
         let textureStripInfo = buffer.readUInt32LE()
 
         while(textureStripInfo != 0)
@@ -239,6 +256,8 @@ class Model
     uvs: number[]
     strips: Strip[]
     segments: Segment[]
+    normals: number[]
+    colors: number[]
 
     constructor()
     {
@@ -246,17 +265,25 @@ class Model
         this.uvs = []
         this.strips = []
         this.segments = []
+        this.normals = []
+        this.colors = []
     }
 
     addVertex(vertex: ModelVertex)
     {
         this.vertices.push(-vertex.x, vertex.z, vertex.y)
         this.uvs.push(float16ToFloat32(vertex.u), float16ToFloat32(vertex.v))
+        this.normals.push(-vertex.nx, vertex.nz, vertex.ny)
     }
 
     addStrip(mesh: Strip)
     {
         this.strips.push(mesh)
+    }
+
+    addVertexColor(color: number)
+    {
+        this.colors.push(((color >> 16) & 0xff), ((color >> 8) & 0xff), (color & 0xff))
     }
 }
 
@@ -292,6 +319,10 @@ interface ModelVertex
     x: number
     y: number
     z: number
+
+    nx: number
+    ny: number
+    nz: number
 
     segment: number
 
