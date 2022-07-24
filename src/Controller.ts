@@ -8,6 +8,7 @@ export class Controller
     controls: PointerLockControls
 
     clock: Clock
+    speed: number
 
     moveForward: boolean
     moveBackward: boolean
@@ -17,8 +18,9 @@ export class Controller
         this.controls = new PointerLockControls(camera, domElement)
         this.clock = new Clock()
 
-        this.moveBackward = false;
-        this.moveForward = false;
+        this.moveBackward = false
+        this.moveForward = false
+        this.speed = 300
 
         document.addEventListener("click", () => this.controls.lock())
 
@@ -37,7 +39,11 @@ export class Controller
             case "KeyS":
                 this.moveBackward = true 
 
-                break;
+                break
+            case "ShiftLeft":
+                this.speed = 600
+
+                break
         }
     }
 
@@ -53,6 +59,10 @@ export class Controller
                 this.moveBackward = false   
                 
                 break
+            case "ShiftLeft":
+                this.speed = 300
+
+                break
         }
     }
 
@@ -63,7 +73,7 @@ export class Controller
         if (this.moveForward || this.moveBackward)
         {
             const vector = new Vector3()
-            const speed = (this.moveForward ? 300.0 : -300.0) * delta
+            const speed = (this.moveForward ? this.speed : -this.speed) * delta
 
             this.controls.getObject().getWorldDirection(vector)
 
