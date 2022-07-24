@@ -1,4 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Object3D } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, AmbientLight } from "three"
 
 import Stats from "stats.js"
 import { Controller } from "./Controller"
@@ -8,7 +8,7 @@ import { LevelLoader, LoadedTerrain } from "./LevelLoader"
 import { Instance, Intro } from "./Instance"
 
 const scene = new Scene();
-const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
 
 const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -18,6 +18,9 @@ const controls = new Controller(camera, renderer.domElement)
 
 const urlParams = new URLSearchParams(window.location.search);
 const level = urlParams.get("level") ?? "container1.drm";
+
+const light = new AmbientLight(0xffffff, 2.0)
+scene.add(light)
 
 class Viewer
 {

@@ -72,7 +72,7 @@ class LevelLoader extends Loader
                 geometry.setAttribute("color", colors)
 
                 geometry.setIndex([...strip.indices])
-                
+
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
                 const material = new MeshStandardMaterial({map: texture?.texture, vertexColors: true, flatShading: true})
@@ -306,7 +306,7 @@ class Terrain
         // pass it to Three.js
         this.vertices.push(-vertex.x, vertex.z, vertex.y)
         this.uvs.push(vertex.u * 0.00024414062, vertex.v * 0.00024414062)
-        this.colors.push(((vertex.color >> 16) & 0xff), ((vertex.color >> 8) & 0xff), (vertex.color & 0xff))
+        this.colors.push((vertex.color >> 16) & 0xff, (vertex.color >> 8) & 0xff, vertex.color & 0xff)
     }
 
     addTerrainGroup(terrainGroup: TerrainGroup)

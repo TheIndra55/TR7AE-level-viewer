@@ -1,4 +1,4 @@
-import { AddEquation, AdditiveBlending, CustomBlending, DoubleSide, DstAlphaFactor, DstColorFactor, Material, MaxEquation, MinEquation, OneFactor, OneMinusDstAlphaFactor, ReverseSubtractEquation, SrcAlphaFactor, SubtractEquation, ZeroFactor } from "three";
+import { AdditiveBlending, DoubleSide, Material, SubtractiveBlending } from "three";
 
 function applyTPageFlags(material: Material, tpageid: number)
 {
@@ -19,10 +19,13 @@ function applyTPageFlags(material: Material, tpageid: number)
     {
         material.transparent = true
         
-        material.blending = CustomBlending
-        material.blendEquation = AddEquation
-        material.blendSrc = DstColorFactor
-        material.blendDst = SrcAlphaFactor
+        // TODO fixme
+        // material.blending = CustomBlending
+        // material.blendEquation = AddEquation
+        // material.blendSrc = DstColorFactor
+        // material.blendDst = SrcAlphaFactor
+
+        material.blending = SubtractiveBlending
     }
 
     if ((tpageid & 0x1E000) == 0x4000)

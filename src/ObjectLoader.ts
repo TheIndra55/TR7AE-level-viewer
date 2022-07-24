@@ -283,7 +283,7 @@ class Model
 
     addVertexColor(color: number)
     {
-        this.colors.push(((color >> 16) & 0xff), ((color >> 8) & 0xff), (color & 0xff))
+        this.colors.push((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff)
     }
 }
 
