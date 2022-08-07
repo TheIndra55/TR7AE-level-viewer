@@ -1,6 +1,7 @@
 import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
+import { MeshGeometry } from "./Mesh"
 import { SectionList, TextureStore } from "./Section"
 import { applyTPageFlags } from "./Util"
 
@@ -87,7 +88,14 @@ class LevelLoader extends Loader
             container.add(group)
         }
 
-        return { container, intros: terrain.intros, portals: terrain.portals, name }
+        return {
+            container,
+            intros: terrain.intros,
+            portals: terrain.portals,
+            name,
+            signalMesh: terrain.signalMesh,
+            terrainGroups: terrain.terrainGroups
+        }
     }
 
     private readTerrain(buffer: BufferReader, offset: number): Terrain
@@ -106,7 +114,9 @@ class LevelLoader extends Loader
         const numTerrainGroups = buffer.readInt32LE()
         const terrainGroups = buffer.readUInt32LE()
 
-        buffer.skip(40)
+        const signalTerrainGroup = buffer.readUInt32LE()
+
+        buffer.skip(36)
         const xboxPcVertexBuffer = buffer.readUInt32LE()
         buffer.skip(12)
         const numTerrainVertices = buffer.readInt32LE()
@@ -175,6 +185,14 @@ class LevelLoader extends Loader
 
             buffer.skip(84)
         }
+        
+        buffer.seek(signalTerrainGroup + 56)
+        const signalmesh = buffer.readUInt32LE()
+
+        if (signalmesh != 0)
+        {
+            terrain.signalMesh = new MeshGeometry(buffer, signalmesh)
+        }
 
         return terrain
     }
@@ -192,7 +210,10 @@ class LevelLoader extends Loader
         buffer.skip(20)
         terrainGroup.flags = buffer.readInt32LE()
 
-        buffer.skip(32)
+        buffer.skip(20)
+        const collisionMesh = buffer.readUInt32LE()
+
+        buffer.skip(8)
         const octree = buffer.readUInt32LE()
 
         buffer.skip(72)
@@ -220,6 +241,8 @@ class LevelLoader extends Loader
             // go trough entire octree
             this.readOctree(buffer, octree, terrainGroup)
         }
+
+        terrainGroup.collision = new MeshGeometry(buffer, collisionMesh)
 
         return terrainGroup
     }
@@ -287,6 +310,7 @@ class Terrain
     intros: Intro[]
     portals: StreamPortal[]
     colors: number[]
+    signalMesh: MeshGeometry
 
     constructor()
     {
@@ -323,6 +347,7 @@ class TerrainGroup
     flags: number
 
     strips: Strip[]
+    collision: MeshGeometry
 
     constructor()
     {
@@ -384,6 +409,8 @@ interface LoadedTerrain
     container: Object3D
     intros: Intro[]
     portals: StreamPortal[]
+    terrainGroups: TerrainGroup[]
+    signalMesh: MeshGeometry
 }
 
 export { LevelLoader, LoadedTerrain, StreamPortal }
