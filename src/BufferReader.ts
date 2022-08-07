@@ -67,7 +67,7 @@ export class BufferReader {
 		const end = this.buffer.indexOf(0, this.position)
 		const ret = this.buffer.toString("ascii", this.position, end)
 
-		this.position += length ?? (end - this.position)
+		this.position += length ?? (end - this.position + 1)
 
 		return ret;
 	}
