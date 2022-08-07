@@ -15,51 +15,51 @@ interface Section
 
 interface Relocation
 {
-	section: number
-	offset: number
+    section: number
+    offset: number
 }
 
 enum SectionType
 {
-	General = 0,
-	Empty = 1,
-	Animation = 2,
-	Texture = 5,
+    General = 0,
+    Empty = 1,
+    Animation = 2,
+    Texture = 5,
 }
 
 class SectionList
 {
-	sections: Section[]
-	buffer: BufferReader
+    sections: Section[]
+    buffer: BufferReader
 
-	constructor(data: Buffer | ArrayBuffer)
-	{
-		let buffer: BufferReader
+    constructor(data: Buffer | ArrayBuffer)
+    {
+        let buffer: BufferReader
 
-		if (data instanceof ArrayBuffer)
-		{
-			buffer = new BufferReader(Buffer.from(data))
-		}
-		else
-		{
-			buffer = new BufferReader(data)
-		}
+        if (data instanceof ArrayBuffer)
+        {
+            buffer = new BufferReader(Buffer.from(data))
+        }
+        else
+        {
+            buffer = new BufferReader(data)
+        }
 
-		this.buffer = buffer
-		this.sections = []
+        this.buffer = buffer
+        this.sections = []
 
-		const version = buffer.readInt32LE()
+        const version = buffer.readInt32LE()
 
-		if (version != 14 && version != 15)
-		{
-			throw `Wrong DRM version, expected 14 but got ${version}`
-		}
+        if (version != 14 && version != 15)
+        {
+            throw `Wrong DRM version, expected 14 but got ${version}`
+        }
 
-		const numSections = buffer.readUInt32LE();
+        const numSections = buffer.readUInt32LE();
 
         // read all section headers
-		for (let i = 0; i < numSections; i++)
-		{
+        for (let i = 0; i < numSections; i++)
+        {
             // @ts-ignore
             let section: Section = { relocations: [] }
 
@@ -75,10 +75,10 @@ class SectionList
             buffer.skip(4)
 
             this.sections.push(section)
-		}
+        }
         
-		for(let section of this.sections)
-		{
+        for(let section of this.sections)
+        {
             // read relocations
             for (let i = 0; i < section.numRelocations; i++)
             {
@@ -93,8 +93,8 @@ class SectionList
             section.offset = buffer.position
 
             // skip past section data
-			this.buffer.skip(section.size);
-		}
+            this.buffer.skip(section.size);
+        }
 
         // to prevent relocating a buffer again return if version has been set to 15
         // this happens for example using Three.js FileLoader which returns the same buffer
@@ -109,7 +109,7 @@ class SectionList
         {
             this.Relocate(section)
         }
-	}
+    }
 
     private Relocate(section: Section)
     {
@@ -127,34 +127,34 @@ class SectionList
         }
     }
 
-	LoadTextures()
-	{
-		for(let section of this.sections)
-		{
-			if(section.type == SectionType.Texture)
-			{
-				const texture = new TextureSection(this, section)
+    LoadTextures()
+    {
+        for(let section of this.sections)
+        {
+            if(section.type == SectionType.Texture)
+            {
+                const texture = new TextureSection(this, section)
 
-				texture.LoadTexture()
-				TextureStore.textures.push(texture)
-			}
-		}
-	}
+                texture.LoadTexture()
+                TextureStore.textures.push(texture)
+            }
+        }
+    }
 
-	GetSection(index: number)
-	{
-		return this.sections[index]
-	}
+    GetSection(index: number)
+    {
+        return this.sections[index]
+    }
 
-	get loadData()
-	{
-		return this.sections[0].offset
-	}
+    get loadData()
+    {
+        return this.sections[0].offset
+    }
 }
 
 class TextureStore
 {
-	static textures: TextureSection[] = []
+    static textures: TextureSection[] = []
 }
 
 export { Section, Relocation, SectionType, SectionList, TextureStore }

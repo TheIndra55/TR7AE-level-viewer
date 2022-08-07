@@ -102,12 +102,12 @@ stats.showPanel(0); // fps
 document.body.appendChild(stats.dom);
 
 function animate() {
-	stats.begin()
+    stats.begin()
 
-	controls.update()
-	renderer.render(scene, camera);
+    controls.update()
+    renderer.render(scene, camera);
 
-	stats.end()
+    stats.end()
 }
 
 renderer.setAnimationLoop(animate)

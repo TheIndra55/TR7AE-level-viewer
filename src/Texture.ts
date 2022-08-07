@@ -16,7 +16,7 @@ export class TextureSection
     numMipMaps: number
     flags: number
 
-	texture: CompressedTexture
+    texture: CompressedTexture
 
     constructor(sections: SectionList, section: Section)
     {
@@ -39,13 +39,13 @@ export class TextureSection
 
     GetTextureData()
     {
-		const data = this.buffer.slice(this.section.offset + 24, this.section.offset + 24 + this.bitmapSize)
-		return new Uint8Array(data, 0, data.length)
+        const data = this.buffer.slice(this.section.offset + 24, this.section.offset + 24 + this.bitmapSize)
+        return new Uint8Array(data, 0, data.length)
     }
 
     LoadTexture()
     {
-		this.texture = new PcdTextureLoader().parse(this)
+        this.texture = new PcdTextureLoader().parse(this)
     }
 }
 
@@ -62,7 +62,7 @@ export class PcdTextureLoader
     parse(texture: TextureSection): CompressedTexture
     {
         let blockBytes
-		let format
+        let format
 
         switch(texture.format)
         {
@@ -80,51 +80,51 @@ export class PcdTextureLoader
                 format = RGBAFormat
 
                 break
-			default:
-				throw "Format not implemented"
+            default:
+                throw "Format not implemented"
         }
 
-		const mipmapCount = 1
-		const mipmaps = []
+        const mipmapCount = 1
+        const mipmaps = []
 
-		let width = texture.width;
-		let height = texture.height;
-		let dataOffset = 0
+        let width = texture.width;
+        let height = texture.height;
+        let dataOffset = 0
 
-		const data = texture.GetTextureData()
+        const data = texture.GetTextureData()
 
-		for (let i = 0; i < mipmapCount; i++)
-		{
-			let dataLength, byteArray
-			
-			if (format == RGBAFormat)
-			{
-				byteArray = this.loadARGBMip(data.buffer, dataOffset, width, height)
-				dataLength = byteArray.length
-			}
-			else
-			{
-				dataLength = Math.max(4, width) / 4 * Math.max(4, height) / 4 * blockBytes
-				byteArray = new Uint8Array(data.buffer, dataOffset, dataLength)
-			}
+        for (let i = 0; i < mipmapCount; i++)
+        {
+            let dataLength, byteArray
+            
+            if (format == RGBAFormat)
+            {
+                byteArray = this.loadARGBMip(data.buffer, dataOffset, width, height)
+                dataLength = byteArray.length
+            }
+            else
+            {
+                dataLength = Math.max(4, width) / 4 * Math.max(4, height) / 4 * blockBytes
+                byteArray = new Uint8Array(data.buffer, dataOffset, dataLength)
+            }
 
-			const mipmap = {data: byteArray, width: width, height: height}
-			mipmaps.push(mipmap)
+            const mipmap = {data: byteArray, width: width, height: height}
+            mipmaps.push(mipmap)
 
-			dataOffset += dataLength
+            dataOffset += dataLength
 
-			width = Math.max(width >> 1, 1)
-			height = Math.max(height >> 1, 1)
-		}
+            width = Math.max(width >> 1, 1)
+            height = Math.max(height >> 1, 1)
+        }
 
-		const compressedTexture = new CompressedTexture(mipmaps, texture.width, texture.height, format)
-		compressedTexture.minFilter = LinearFilter
-		compressedTexture.wrapS = RepeatWrapping
-		compressedTexture.wrapT = RepeatWrapping
+        const compressedTexture = new CompressedTexture(mipmaps, texture.width, texture.height, format)
+        compressedTexture.minFilter = LinearFilter
+        compressedTexture.wrapS = RepeatWrapping
+        compressedTexture.wrapT = RepeatWrapping
         
-		compressedTexture.needsUpdate = true
+        compressedTexture.needsUpdate = true
 
-		return compressedTexture
+        return compressedTexture
     }
     
     // copied from orginal three.js DDSLoader
