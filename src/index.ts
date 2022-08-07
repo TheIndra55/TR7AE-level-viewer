@@ -1,4 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, AmbientLight } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, AmbientLight, MeshBasicMaterial, Color, DoubleSide, Mesh, Vector3, Group } from "three"
 
 import Stats from "stats.js"
 import { Controller } from "./Controller"
@@ -6,6 +6,8 @@ import { Controller } from "./Controller"
 import { ObjectLoader } from "./ObjectLoader"
 import { LevelLoader, LoadedTerrain } from "./LevelLoader"
 import { Instance, Intro } from "./Instance"
+
+import { GUI } from "dat.gui"
 
 const scene = new Scene();
 const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
@@ -25,13 +27,15 @@ scene.add(light)
 class Viewer
 {
     private scene: Scene
-    private currentLevelMesh: Object3D
 
     private levelLoader: LevelLoader
     private objectLoader: ObjectLoader
 
     private instances: Instance[]
     private objectList: {}
+
+    // too lazy for getter
+    currentLevel: LoadedTerrain
 
     constructor(scene: Scene)
     {
@@ -51,7 +55,7 @@ class Viewer
         const scope = this
 
         this.levelLoader.load(level, async function (level: LoadedTerrain) {
-            scope.currentLevelMesh = level.container
+            scope.currentLevel = level
             scope.scene.add(level.container)
 
             // load all intros
@@ -98,6 +102,53 @@ viewer.loadLevel(level)
 
 const stats = new Stats()
 stats.showPanel(0); // fps
+
+const menu = new GUI()
+const options = {showSignals: false, showCollision: false}
+
+let signalMesh: Object3D
+let collisionMesh: Object3D
+
+function toggleSignals()
+{
+    // construct mesh if not yet
+    if (!signalMesh)
+    {
+        const material = new MeshBasicMaterial({color: new Color(1, 0, 0), opacity: 0.5, transparent: true, side: DoubleSide})
+        signalMesh = new Mesh(viewer.currentLevel.signalMesh, material)
+
+        signalMesh.scale.divide(new Vector3(10, 10, 10))
+    }
+
+    // add to scene, or remove if disabled
+    options.showSignals ? scene.add(signalMesh) : scene.remove(signalMesh)
+}
+
+function toggleCollision()
+{
+    // construct collision mesh group with all children
+    if (!collisionMesh)
+    {
+        const material = new MeshBasicMaterial({color: new Color(0, 1, 0), opacity: 0.5, transparent: true, side: DoubleSide})
+
+        collisionMesh = new Group()
+        for (let terrainGroup of viewer.currentLevel.terrainGroups)
+        {
+            const mesh = new Mesh(terrainGroup.collision, material)
+            mesh.scale.divide(new Vector3(10, 10, 10))
+            mesh.position.set(-(terrainGroup.x) / 10, terrainGroup.z / 10, terrainGroup.y / 10)
+
+            collisionMesh.add(mesh)
+        }
+    }
+
+    // add to scene, or remove if disabled
+    options.showCollision ? scene.add(collisionMesh) : scene.remove(collisionMesh)
+}
+
+// add dat.gui options
+menu.add(options, "showSignals").onChange(toggleSignals)
+menu.add(options, "showCollision").onChange(toggleCollision)
 
 document.body.appendChild(stats.dom);
 
