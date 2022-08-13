@@ -44,6 +44,13 @@ class LevelLoader extends Loader
 
         const name = buffer.readString()
 
+        // seek to markup
+        buffer.seek(object.loadData + 96)
+        const numMarkups = buffer.readInt32LE()
+        const markupList = buffer.readUInt32LE()
+
+        const markup = this.readMarkUp(buffer, numMarkups, markupList)
+
         const container = new Group()
 
         for (let terrainGroup of terrain.terrainGroups)
@@ -94,7 +101,8 @@ class LevelLoader extends Loader
             portals: terrain.portals,
             name,
             signalMesh: terrain.signalMesh,
-            terrainGroups: terrain.terrainGroups
+            terrainGroups: terrain.terrainGroups,
+            markup
         }
     }
 
@@ -300,6 +308,57 @@ class LevelLoader extends Loader
             }
         }
     }
+
+    private readMarkUp(buffer: BufferReader, numMarkUps: number, offset: number): MarkUp[]
+    {
+        buffer.seek(offset)
+
+        const markups: MarkUp[] = []
+
+        for (let i = 0; i < numMarkUps; i++)
+        {
+            buffer.skip(12)
+            const flags = buffer.readUInt32LE()
+
+            // associated intro, used for markup such as water
+            const intro = buffer.readInt16LE()
+            const id = buffer.readInt16LE()
+
+            const position = buffer.readVector3LE()
+
+            buffer.skip(12)
+            const polyLine = buffer.readUInt32LE()
+
+            // keep old cursor since we're seeking
+            const cursor = buffer.position
+
+            // read markup polyline
+            buffer.seek(polyLine)
+
+            const numSegments = buffer.readInt32LE()
+            const segments = []
+
+            // padding
+            buffer.skip(12);
+            
+            for (let j = 0; j < numSegments; j++)
+            {
+                const segment = buffer.readVector3LE()
+                segment.divideScalar(10)
+
+                // cursed vector transformations
+                segments.push(new Vector3(-segment.x, segment.z, segment.y))
+
+                buffer.skip(4)
+            }
+
+            markups.push({ flags, intro, polyLine: segments, id, position })
+
+            buffer.seek(cursor)
+        }
+
+        return markups
+    }
 }
 
 class Terrain
@@ -403,6 +462,15 @@ interface StreamPortal
     max: Vector3
 }
 
+interface MarkUp
+{
+    flags: number
+    intro: number
+    position: Vector3
+    id: number
+    polyLine: Vector3[]
+}
+
 interface LoadedTerrain
 {
     name: string
@@ -411,6 +479,7 @@ interface LoadedTerrain
     portals: StreamPortal[]
     terrainGroups: TerrainGroup[]
     signalMesh: MeshGeometry
+    markup: MarkUp[]
 }
 
 export { LevelLoader, LoadedTerrain, StreamPortal }
