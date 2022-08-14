@@ -49,7 +49,12 @@ class LevelLoader extends Loader
         const numMarkups = buffer.readInt32LE()
         const markupList = buffer.readUInt32LE()
 
-        const markup = this.readMarkUp(buffer, numMarkups, markupList)
+        const markup = this.readMarkUp(buffer, numMarkups, markupList, 
+            // HACK
+            // since Crystal Dynamics did not increment the level version
+            // number between these games, we check for next generation mesh
+            // data to determine if this is Legend or Anniversary
+            terrain.cdcRenderDataId != 0)
 
         const container = new Group()
 
@@ -128,6 +133,9 @@ class LevelLoader extends Loader
         const xboxPcVertexBuffer = buffer.readUInt32LE()
         buffer.skip(12)
         const numTerrainVertices = buffer.readInt32LE()
+
+        buffer.skip(8)
+        terrain.cdcRenderDataId = buffer.readUInt32LE();
 
         buffer.seek(xboxPcVertexBuffer)
         for (let i = 0; i < numTerrainVertices; i++)
@@ -309,7 +317,7 @@ class LevelLoader extends Loader
         }
     }
 
-    private readMarkUp(buffer: BufferReader, numMarkUps: number, offset: number): MarkUp[]
+    private readMarkUp(buffer: BufferReader, numMarkUps: number, offset: number, isLegend: boolean): MarkUp[]
     {
         buffer.seek(offset)
 
@@ -318,6 +326,8 @@ class LevelLoader extends Loader
         for (let i = 0; i < numMarkUps; i++)
         {
             buffer.skip(12)
+            if (!isLegend) buffer.skip(28)
+
             const flags = buffer.readUInt32LE()
 
             // associated intro, used for markup such as water
@@ -331,25 +341,28 @@ class LevelLoader extends Loader
 
             // keep old cursor since we're seeking
             const cursor = buffer.position
-
-            // read markup polyline
-            buffer.seek(polyLine)
-
-            const numSegments = buffer.readInt32LE()
             const segments = []
 
-            // padding
-            buffer.skip(12);
-            
-            for (let j = 0; j < numSegments; j++)
+            if (polyLine != 0)
             {
-                const segment = buffer.readVector3LE()
-                segment.divideScalar(10)
+                // read markup polyline
+                buffer.seek(polyLine)
 
-                // cursed vector transformations
-                segments.push(new Vector3(-segment.x, segment.z, segment.y))
+                const numSegments = buffer.readInt32LE()
 
-                buffer.skip(4)
+                // padding
+                buffer.skip(12);
+                
+                for (let j = 0; j < numSegments; j++)
+                {
+                    const segment = buffer.readVector3LE()
+                    segment.divideScalar(10)
+
+                    // cursed vector transformations
+                    segments.push(new Vector3(-segment.x, segment.z, segment.y))
+
+                    buffer.skip(4)
+                }
             }
 
             markups.push({ flags, intro, polyLine: segments, id, position })
@@ -370,6 +383,7 @@ class Terrain
     portals: StreamPortal[]
     colors: number[]
     signalMesh: MeshGeometry
+    cdcRenderDataId: number
 
     constructor()
     {

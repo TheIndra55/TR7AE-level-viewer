@@ -1,4 +1,4 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, AmbientLight, MeshBasicMaterial, Color, DoubleSide, Mesh, Vector3, Group } from "three"
+import { Scene, PerspectiveCamera, WebGLRenderer, Object3D, AmbientLight, MeshBasicMaterial, Color, DoubleSide, Mesh, Vector3, Group, BufferGeometry, Line, LineBasicMaterial } from "three"
 
 import Stats from "stats.js"
 import { Controller } from "./Controller"
@@ -103,11 +103,15 @@ viewer.loadLevel(level)
 const stats = new Stats()
 stats.showPanel(0); // fps
 
+// TODO refactor
 const menu = new GUI()
-const options = {showSignals: false, showCollision: false}
+const options = {showSignals: false, showCollision: false, showMarkUp: false}
 
 let signalMesh: Object3D
 let collisionMesh: Object3D
+let markUpMesh: Object3D
+
+// toggle functions for menu stuff
 
 function toggleSignals()
 {
@@ -146,9 +150,30 @@ function toggleCollision()
     options.showCollision ? scene.add(collisionMesh) : scene.remove(collisionMesh)
 }
 
+function toggleMarkUp()
+{
+    if (!markUpMesh)
+    {
+        const material = new LineBasicMaterial({color: new Color(0, 0, 1)})
+
+        markUpMesh = new Group()
+        for (let markUp of viewer.currentLevel.markup)
+        {
+            const geometry = new BufferGeometry().setFromPoints(markUp.polyLine)
+            const line = new Line(geometry, material)
+
+            markUpMesh.add(line)
+        }
+    }
+
+    // add to scene, or remove if disabled
+    options.showMarkUp ? scene.add(markUpMesh) : scene.remove(markUpMesh)
+}
+
 // add dat.gui options
-menu.add(options, "showSignals").onChange(toggleSignals)
-menu.add(options, "showCollision").onChange(toggleCollision)
+menu.add(options, "showSignals").onChange(toggleSignals).name("Signals")
+menu.add(options, "showCollision").onChange(toggleCollision).name("Collision")
+menu.add(options, "showMarkUp").onChange(toggleMarkUp).name("Markup")
 
 document.body.appendChild(stats.dom);
 
