@@ -49,6 +49,12 @@ class LevelLoader extends Loader
         const numMarkups = buffer.readInt32LE()
         const markupList = buffer.readUInt32LE()
 
+        // read player name
+        buffer.skip(128);
+        buffer.seek(buffer.readUInt32LE())
+
+        const playerName = buffer.readString()
+
         const markup = this.readMarkUp(buffer, numMarkups, markupList, 
             // HACK
             // since Crystal Dynamics did not increment the level version
@@ -107,7 +113,8 @@ class LevelLoader extends Loader
             name,
             signalMesh: terrain.signalMesh,
             terrainGroups: terrain.terrainGroups,
-            markup
+            markup,
+            playerName
         }
     }
 
@@ -493,7 +500,8 @@ interface LoadedTerrain
     portals: StreamPortal[]
     terrainGroups: TerrainGroup[]
     signalMesh: MeshGeometry
-    markup: MarkUp[]
+    markup: MarkUp[],
+    playerName: string
 }
 
 export { LevelLoader, LoadedTerrain, StreamPortal }

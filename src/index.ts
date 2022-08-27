@@ -44,6 +44,9 @@ class Viewer
         this.levelLoader = new LevelLoader()
         this.objectLoader = new ObjectLoader()
 
+        this.objectLoader.setPath("objects/")
+        this.levelLoader.setPath("objects/")
+
         this.instances = []
 
         // possible race condition if level loads before objectlist.txt
@@ -71,7 +74,13 @@ class Viewer
     loadInstance(intro: Intro)
     {
         const scope = this
-        const object = this.objectList[intro.object]
+        let object = this.objectList[intro.object]
+
+        // 'player' is used as placeholder in the intro, replace by level playerName
+        if (object == "player")
+        {
+            object = this.currentLevel.playerName
+        }
 
         this.objectLoader.load(object + ".drm", function(mesh: Object3D) {
             const instance = new Instance(intro.id, mesh)

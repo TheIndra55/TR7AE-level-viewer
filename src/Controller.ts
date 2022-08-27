@@ -22,7 +22,7 @@ export class Controller
         this.moveForward = false
         this.speed = 300
 
-        document.addEventListener("click", () => this.controls.lock())
+        document.querySelector("canvas").addEventListener("click", () => this.controls.lock())
 
         document.addEventListener("keydown", event => this.keydown(event))
         document.addEventListener("keyup", event => this.keyup(event))
