@@ -44,9 +44,6 @@ class Viewer
         this.levelLoader = new LevelLoader()
         this.objectLoader = new ObjectLoader()
 
-        this.objectLoader.setPath("objects/")
-        this.levelLoader.setPath("objects/")
-
         this.instances = []
 
         // possible race condition if level loads before objectlist.txt

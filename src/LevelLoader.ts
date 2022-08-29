@@ -120,6 +120,11 @@ class LevelLoader extends Loader
 
     private readTerrain(buffer: BufferReader, offset: number): Terrain
     {
+        if (offset == 0)
+        {
+            throw "Cannot to read terrain, Level->terrain is a nullptr"
+        }
+
         const terrain = new Terrain()
 
         buffer.seek(offset)
@@ -143,6 +148,11 @@ class LevelLoader extends Loader
 
         buffer.skip(8)
         terrain.cdcRenderDataId = buffer.readUInt32LE();
+
+        if (xboxPcVertexBuffer == 0)
+        {
+            throw "Failed to read vertices, Terrain->xboxPcVertexBuffer is nullptr"
+        }
 
         buffer.seek(xboxPcVertexBuffer)
         for (let i = 0; i < numTerrainVertices; i++)

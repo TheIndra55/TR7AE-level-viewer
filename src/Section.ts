@@ -17,6 +17,7 @@ interface Relocation
 {
     section: number
     offset: number
+    type: RelocationType
 }
 
 enum SectionType
@@ -25,6 +26,14 @@ enum SectionType
     Empty = 1,
     Animation = 2,
     Texture = 5,
+}
+
+enum RelocationType
+{
+    Pointer,
+    ResourceId,
+    ResourceId16,
+    ResourcePointer
 }
 
 class SectionList
@@ -86,7 +95,7 @@ class SectionList
                 buffer.skip(2)
                 const offset = buffer.readUInt32LE()
 
-                const relocation: Relocation = { section: typeAndSectionInfo >> 3, offset }
+                const relocation: Relocation = { section: typeAndSectionInfo >> 3, offset, type: (typeAndSectionInfo & 7) }
                 section.relocations.push(relocation)
             }
 
@@ -118,6 +127,12 @@ class SectionList
 
         for (let relocation of section.relocations)
         {
+            if (relocation.type != RelocationType.Pointer)
+            {
+                // not implemented
+                return
+            }
+
             const position = section.offset + relocation.offset
             const otherSection = this.sections[relocation.section]
 
