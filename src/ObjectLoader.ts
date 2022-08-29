@@ -68,7 +68,7 @@ class ObjectLoader extends Loader
             {
                 const texture = TextureStore.textures.find(x => x.section.id == strip.texture)
 
-                materials[strip.tpageid] = new MeshStandardMaterial({map: texture.texture, vertexColors: true})
+                materials[strip.tpageid] = new MeshStandardMaterial({map: texture?.texture, vertexColors: true})
                 applyTPageFlags(materials[strip.tpageid], strip.tpageid)
             }
         }
@@ -241,7 +241,7 @@ class ObjectLoader extends Loader
     }
 }
 
-function float16ToFloat32(short)
+function float16ToFloat32(short: number)
 {
     var buf = new ArrayBuffer(4);
     var view = new DataView(buf);

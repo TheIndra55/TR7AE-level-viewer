@@ -399,7 +399,7 @@ class Terrain
     intros: Intro[]
     portals: StreamPortal[]
     colors: number[]
-    signalMesh: MeshGeometry
+    signalMesh: MeshGeometry | undefined
     cdcRenderDataId: number
 
     constructor()
@@ -410,6 +410,7 @@ class Terrain
         this.intros = []
         this.portals = []
         this.colors = []
+        this.cdcRenderDataId = 0
     }
 
     addVertex(vertex: TerrainVertex)
@@ -509,7 +510,7 @@ interface LoadedTerrain
     intros: Intro[]
     portals: StreamPortal[]
     terrainGroups: TerrainGroup[]
-    signalMesh: MeshGeometry
+    signalMesh: MeshGeometry | undefined
     markup: MarkUp[],
     playerName: string
 }

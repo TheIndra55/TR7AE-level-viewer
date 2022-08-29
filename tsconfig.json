@@ -1,9 +1,10 @@
 {
-	"compilerOptions": {
-		"outDir": "./dist/",
-		"sourceMap": true,
-		"target": "es2020",
-		"esModuleInterop": true,
-		"moduleResolution": "node"
-	}
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+        "target": "es2020",
+        "esModuleInterop": true,
+        "moduleResolution": "node",
+        "strict": true
+    }
 }

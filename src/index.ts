@@ -32,10 +32,10 @@ class Viewer
     private objectLoader: ObjectLoader
 
     private instances: Instance[]
-    private objectList: {}
+    private objectList: string[]
 
     // too lazy for getter
-    currentLevel: LoadedTerrain
+    currentLevel: LoadedTerrain | undefined
 
     constructor(scene: Scene)
     {
@@ -45,6 +45,7 @@ class Viewer
         this.objectLoader = new ObjectLoader()
 
         this.instances = []
+        this.objectList = []
 
         // possible race condition if level loads before objectlist.txt
         this.loadObjectList()
@@ -63,12 +64,12 @@ class Viewer
                 if (intro.object < 1) return
 
                 // insert javascript 'this' meme
-                scope.loadInstance.call(scope, intro)
+                scope.loadInstance.call(scope, level, intro)
             })
         })
     }
 
-    loadInstance(intro: Intro)
+    loadInstance(level: LoadedTerrain, intro: Intro)
     {
         const scope = this
         let object = this.objectList[intro.object]
@@ -76,7 +77,7 @@ class Viewer
         // 'player' is used as placeholder in the intro, replace by level playerName
         if (object == "player")
         {
-            object = this.currentLevel.playerName
+            object = level.playerName
         }
 
         this.objectLoader.load(object + ".drm", function(mesh: Object3D) {
