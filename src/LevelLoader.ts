@@ -1,4 +1,5 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
+import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Matrix4, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
+import { BGObject, BGObjectLoader } from "./BGObject"
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
 import { MeshGeometry } from "./Mesh"
@@ -64,6 +65,7 @@ class LevelLoader extends Loader
 
         const container = new Group()
 
+        // add terraingroups to scene
         for (let terrainGroup of terrain.terrainGroups)
         {
             // ignore skydome terraingroups
@@ -106,6 +108,20 @@ class LevelLoader extends Loader
             container.add(group)
         }
 
+        // add BGInstances to scene
+        for (let bgInstance of terrain.bgInstances)
+        {
+            const bgObject = terrain.bgObjects[bgInstance.object]
+
+            const mesh = new Mesh(bgObject.geometry, bgObject.materials)
+            mesh.applyMatrix4(bgInstance.matrix)
+
+            mesh.scale.divide(new Vector3(10, 10, 10))
+            mesh.position.divide(new Vector3(10, 10, 10))
+
+            container.add(mesh)
+        }
+
         return {
             container,
             intros: terrain.intros,
@@ -141,7 +157,15 @@ class LevelLoader extends Loader
 
         const signalTerrainGroup = buffer.readUInt32LE()
 
-        buffer.skip(36)
+        buffer.skip(8)
+
+        const numBGInstances = buffer.readInt32LE()
+        const bgInstanceList = buffer.readUInt32LE()
+
+        const numBGObjects = buffer.readInt32LE()
+        const bgObjectList = buffer.readUInt32LE()
+
+        buffer.skip(12)
         const xboxPcVertexBuffer = buffer.readUInt32LE()
         buffer.skip(12)
         const numTerrainVertices = buffer.readInt32LE()
@@ -218,7 +242,28 @@ class LevelLoader extends Loader
 
             buffer.skip(84)
         }
+
+        // read BGInstances
+        buffer.seek(bgInstanceList)
+        for (let i = 0; i < numBGInstances; i++)
+        {
+            const matrix = buffer.readMatrixLE()
+
+            buffer.skip(128)
+            const object = buffer.readUInt32LE()
+
+            terrain.bgInstances.push({ object: (object - bgObjectList) / 96, matrix })
+
+            buffer.skip(44)
+        }
+
+        // read and load BGObjects
+        if (numBGObjects > 0)
+        {
+            terrain.bgObjects = new BGObjectLoader().parse(buffer, bgObjectList, numBGObjects)
+        }
         
+        // read signal mesh
         buffer.seek(signalTerrainGroup + 56)
         const signalmesh = buffer.readUInt32LE()
 
@@ -399,8 +444,11 @@ class Terrain
     intros: Intro[]
     portals: StreamPortal[]
     colors: number[]
-    signalMesh: MeshGeometry | undefined
+    signalMesh: MeshGeometry
     cdcRenderDataId: number
+
+    bgInstances: BGInstance[]
+    bgObjects: BGObject[]
 
     constructor()
     {
@@ -411,6 +459,9 @@ class Terrain
         this.portals = []
         this.colors = []
         this.cdcRenderDataId = 0
+
+        this.bgInstances = []
+        this.bgObjects = []
     }
 
     addVertex(vertex: TerrainVertex)
@@ -501,6 +552,12 @@ interface MarkUp
     position: Vector3
     id: number
     polyLine: Vector3[]
+}
+
+interface BGInstance
+{
+    object: number
+    matrix: Matrix4
 }
 
 interface LoadedTerrain
