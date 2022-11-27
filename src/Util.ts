@@ -38,6 +38,12 @@ function applyTPageFlags(material: Material, tpageid: number)
     {
         material.transparent = true
     }
+
+    if ((tpageid & 0x1E000) == 0x12000)
+    {
+        material.transparent = true
+        material.blending = AdditiveBlending
+    }
 }
 
 export { applyTPageFlags }

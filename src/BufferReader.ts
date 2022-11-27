@@ -66,19 +66,28 @@ export class BufferReader {
     readMatrixLE(): Matrix4 {
         const matrix = new Matrix4()
 
-        const [x1, y1, z1, w1] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
-        const [x2, y2, z2, w2] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
-        const [x3, y3, z3, w3] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
-        const [x4, y4, z4, w4] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
+        const [m11, m12, m13, m14] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
+        const [m21, m22, m23, m24] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
+        const [m31, m32, m33, m34] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
+        const [m41, m42, m43, m44] = [this.readFloatLE(), this.readFloatLE(), this.readFloatLE(), this.readFloatLE()]
 
         matrix.set(
-            x1, z1, y1, -x4,
-            x3, z3, y3, z4,
-            x2, z2, y2, y4,
-            w1, w2, w3, w4,
+           m11, m21, m31, m41,
+           m12, m22, m32, m42,
+           m13, m23, m33, m43,
+           0,   0,   0,   m44,
         )
 
-        return matrix
+        const flipMatrix = new Matrix4()
+        flipMatrix.set(
+            -1, 0, 0, 0,
+            0,  0, 1, 0,
+            0,  1, 0, 0,
+            0,  0, 0, 1,
+        )
+
+        // flip matrix * matrix * flip matrix
+        return matrix.premultiply(flipMatrix).multiply(flipMatrix)
     }
 
     readString(length?: number): string {
