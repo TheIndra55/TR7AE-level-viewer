@@ -14,6 +14,7 @@ const camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight,
 
 const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+
 document.body.appendChild(renderer.domElement);
 
 const controls = new Controller(camera, renderer.domElement)
@@ -64,6 +65,8 @@ class Viewer
 
         this.levelLoader.load(level, async function (level: LoadedTerrain) {
             scope.finishLoad.call(scope, level)
+
+            scene.background = level.background
         })
     }
 

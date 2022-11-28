@@ -1,4 +1,4 @@
-import { BufferGeometry, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Matrix4, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
+import { BufferGeometry, Color, FileLoader, Float32BufferAttribute, Group, Int16BufferAttribute, Loader, LoadingManager, Matrix4, Mesh, MeshStandardMaterial, Object3D, Uint8BufferAttribute, Vector3 } from "three"
 import { BGObject, BGObjectLoader } from "./BGObject"
 import { BufferReader } from "./BufferReader"
 import { Intro } from "./Instance"
@@ -38,6 +38,10 @@ class LevelLoader extends Loader
         buffer.seek(object.loadData)
 
         const terrain = this.readTerrain(buffer, buffer.readUInt32LE())
+
+        // read background color
+        buffer.seek(object.loadData + 8)
+        const background = new Color(buffer.readUInt8() / 255, buffer.readUInt8() / 255, buffer.readUInt8() / 255)
 
         // read unit name
         buffer.seek(object.loadData + 128)
@@ -130,7 +134,8 @@ class LevelLoader extends Loader
             signalMesh: terrain.signalMesh,
             terrainGroups: terrain.terrainGroups,
             markup,
-            playerName
+            playerName,
+            background,
         }
     }
 
@@ -570,6 +575,7 @@ interface LoadedTerrain
     signalMesh: MeshGeometry | undefined
     markup: MarkUp[],
     playerName: string
+    background: Color
 }
 
 export { LevelLoader, LoadedTerrain, StreamPortal }
