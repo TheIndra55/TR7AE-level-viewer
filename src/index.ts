@@ -53,18 +53,16 @@ class Viewer
         this.loadedLevels = []
         this.requestedLevels = []
 
-        // possible race condition if level loads before objectlist.txt
+        // race condition if level loads before objectlist.txt
         this.loadObjectList()
     }
 
     loadLevel(level: string)
     {
-        const scope = this
-        
-        scope.requestedLevels.push(level)
+        this.requestedLevels.push(level)
 
-        this.levelLoader.load(level, async function (level: LoadedTerrain) {
-            scope.finishLoad.call(scope, level)
+        this.levelLoader.load(level, (level: LoadedTerrain) => {
+            this.finishLoad(level)
 
             scene.background = level.background
         })
@@ -72,39 +70,35 @@ class Viewer
 
     finishLoad(level: LoadedTerrain)
     {
-        const scope = this
-
-        scope.loadedLevels.push(level)
-        scope.scene.add(level.container)
+        this.loadedLevels.push(level)
+        this.scene.add(level.container)
 
         // load all intros
-        level.intros.forEach(function(intro) {
+        level.intros.forEach(intro => {
             if (intro.object < 1) return
 
-            // insert javascript 'this' meme
-            scope.loadInstance.call(scope, level, intro)
+            this.loadInstance(level, intro)
         })
 
         // load connected levels
-        level.portals.forEach(function(portal) {
-            if (!scope.loadPortals)
+        level.portals.forEach(portal => {
+            if (!this.loadPortals)
             {
                 return
             }
 
             // make sure the level is not already loaded or loading
-            if (scope.requestedLevels.includes(portal.destination))
+            if (this.requestedLevels.includes(portal.destination))
             {
                 return
             }
 
-            scope.loadConnectedLevel.call(scope, level, portal)
+            this.loadConnectedLevel(level, portal)
         })
     }
 
     loadInstance(level: LoadedTerrain, intro: Intro)
     {
-        const scope = this
         let object = this.objectList[intro.object]
 
         // 'player' is used as placeholder in the intro, replace by level playerName
@@ -113,7 +107,7 @@ class Viewer
             object = level.playerName
         }
 
-        this.objectLoader.load(object + ".drm", function(mesh: Object3D) {
+        this.objectLoader.load(object + ".drm", (mesh: Object3D) => {
             const instance = new Instance(intro.id, mesh)
 
             instance.position = intro.position
@@ -121,18 +115,16 @@ class Viewer
 
             instance.mesh.position.add(level.container.position)
 
-            scope.instances.push(instance)
-            scope.scene.add(instance.mesh)
+            this.instances.push(instance)
+            this.scene.add(instance.mesh)
         })
     }
 
     loadConnectedLevel(parent: LoadedTerrain, portal: StreamPortal)
     {
-        const scope = this
+        this.requestedLevels.push(portal.destination)
 
-        scope.requestedLevels.push(portal.destination)
-
-        this.levelLoader.load(portal.destination + ".drm", function(level: LoadedTerrain) {
+        this.levelLoader.load(portal.destination + ".drm", (level: LoadedTerrain) => {
             // calculate level position
             const other = level.portals.find(x => x.destination == parent.name)
             const offset = portal.min.sub(other.min)
@@ -143,7 +135,7 @@ class Viewer
             
             level.container.position.add(parent.container.position)
 
-            scope.finishLoad.call(scope, level)
+            this.finishLoad(level)
         })
     }
 
