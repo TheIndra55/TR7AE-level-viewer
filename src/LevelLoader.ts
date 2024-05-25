@@ -69,6 +69,9 @@ class LevelLoader extends Loader
 
         const container = new Group()
 
+        const vertexBuffer = terrain.vertexBuffer.createBuffers()
+        const vmoVertexBuffer = terrain.vmoVertexBuffer.createBuffers()
+
         // add terraingroups to scene
         for (let terrainGroup of terrain.terrainGroups)
         {
@@ -81,10 +84,6 @@ class LevelLoader extends Loader
             const group = new Group()
             group.position.set(-(terrainGroup.x) / 10, terrainGroup.z / 10, terrainGroup.y / 10)
 
-            const positions = new Int16BufferAttribute(terrain.vertices, 3)
-            const uvs = new Float32BufferAttribute(terrain.uvs, 2)
-            const colors = new Uint8BufferAttribute(terrain.colors, 3, true)
-
             // this code currently can make the renderer take really
             // long to generate the boundingspheres for large levels, might need to
             // bring al indices to the top and use groups with start:, end:, materialIndex:
@@ -92,9 +91,11 @@ class LevelLoader extends Loader
             {
                 const geometry = new BufferGeometry()
 
-                geometry.setAttribute("position", positions)
-                geometry.setAttribute("uv", uvs)
-                geometry.setAttribute("color", colors)
+                const buffer = (strip.flags & 0x1C) == 0 ? vertexBuffer : vmoVertexBuffer
+
+                geometry.setAttribute("position", buffer.positions)
+                geometry.setAttribute("uv", buffer.uvs)
+                geometry.setAttribute("color", buffer.colors)
 
                 geometry.setIndex([...strip.indices])
 
@@ -172,10 +173,12 @@ class LevelLoader extends Loader
 
         buffer.skip(12)
         const xboxPcVertexBuffer = buffer.readUInt32LE()
-        buffer.skip(12)
-        const numTerrainVertices = buffer.readInt32LE()
-
+        const xboxPcVmoBuffer = buffer.readUInt32LE()
         buffer.skip(8)
+        const numTerrainVertices = buffer.readInt32LE()
+        buffer.skip(4)
+        const numTerrainVMOVertices = buffer.readInt32LE()
+
         terrain.cdcRenderDataId = buffer.readUInt32LE();
 
         if (xboxPcVertexBuffer == 0)
@@ -200,6 +203,25 @@ class LevelLoader extends Loader
             buffer.skip(4)
 
             terrain.addVertex({ x, y, z, u, v, color })
+        }
+
+        buffer.seek(xboxPcVmoBuffer)
+        for (let i = 0; i < numTerrainVMOVertices; i++)
+        {
+            const x = buffer.readInt16LE()
+            const y = buffer.readInt16LE()
+            const z = buffer.readInt16LE()
+
+            buffer.skip(2)
+
+            const color = buffer.readInt32LE()
+
+            const u = buffer.readInt16LE()
+            const v = buffer.readInt16LE()
+
+            buffer.skip(20)
+
+            terrain.addVmoVertex({ x, y, z, u, v, color })
         }
 
         // read terraingroups
@@ -369,12 +391,6 @@ class LevelLoader extends Loader
             
             const material = terrainGroup.strips[matIdx]
 
-            // skip vmo strips until these are implemented
-            if ((material.flags & 0x1C) != 0)
-            {
-                continue
-            }
-
             for (let i = 0; i < vertexCount; i++)
             {
                 const indice = buffer.readInt16LE()
@@ -443,41 +459,40 @@ class LevelLoader extends Loader
 
 class Terrain
 {
-    vertices: number[]
-    uvs: number[]
     terrainGroups: TerrainGroup[]
     intros: Intro[]
     portals: StreamPortal[]
-    colors: number[]
     signalMesh: MeshGeometry
     cdcRenderDataId: number
 
     bgInstances: BGInstance[]
     bgObjects: BGObject[]
 
+    vertexBuffer: TerrainVertexBuffer
+    vmoVertexBuffer: TerrainVertexBuffer
+
     constructor()
     {
-        this.vertices = []
-        this.uvs = []
         this.terrainGroups = []
         this.intros = []
         this.portals = []
-        this.colors = []
         this.cdcRenderDataId = 0
 
         this.bgInstances = []
         this.bgObjects = []
+
+        this.vertexBuffer = new TerrainVertexBuffer()
+        this.vmoVertexBuffer = new TerrainVertexBuffer()
     }
 
     addVertex(vertex: TerrainVertex)
     {
-        // this functions is kinda a transition from game to Three.js
-        // the other functions only read the game values and here we somewhat
-        // convert it to right units and put it all in a single buffer to easily
-        // pass it to Three.js
-        this.vertices.push(-vertex.x, vertex.z, vertex.y)
-        this.uvs.push(vertex.u * 0.00024414062, vertex.v * 0.00024414062)
-        this.colors.push((vertex.color >> 16) & 0xff, (vertex.color >> 8) & 0xff, vertex.color & 0xff)
+        this.vertexBuffer.addVertex(vertex)
+    }
+
+    addVmoVertex(vertex: TerrainVertex)
+    {
+        this.vmoVertexBuffer.addVertex(vertex)
     }
 
     addTerrainGroup(terrainGroup: TerrainGroup)
@@ -541,6 +556,40 @@ class TerrainVertex
 
     u: number
     v: number
+}
+
+class TerrainVertexBuffer
+{
+    vertices: number[]
+    uvs: number[]
+    colors: number[]
+
+    constructor()
+    {
+        this.vertices = []
+        this.uvs = []
+        this.colors = []
+    }
+
+    addVertex(vertex: TerrainVertex)
+    {
+        // this functions is kinda a transition from game to Three.js
+        // the other functions only read the game values and here we somewhat
+        // convert it to right units and put it all in a single buffer to easily
+        // pass it to Three.js
+        this.vertices.push(-vertex.x, vertex.z, vertex.y)
+        this.uvs.push(vertex.u * 0.00024414062, vertex.v * 0.00024414062)
+        this.colors.push((vertex.color >> 16) & 0xff, (vertex.color >> 8) & 0xff, vertex.color & 0xff)
+    }
+
+    createBuffers()
+    {
+        const positions = new Int16BufferAttribute(this.vertices, 3)
+        const uvs = new Float32BufferAttribute(this.uvs, 2)
+        const colors = new Uint8BufferAttribute(this.colors, 3, true)
+
+        return { positions, uvs, colors }
+    }
 }
 
 interface StreamPortal
